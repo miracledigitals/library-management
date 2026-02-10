@@ -16,6 +16,7 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Loader2,
     X,
@@ -30,7 +31,7 @@ import {
     MapPin,
     Shield
 } from "lucide-react";
-import { PatronMembership, PatronStatus } from "@/types";
+import { MembershipType, MembershipStatus } from "@/types";
 import { Timestamp } from "firebase/firestore";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,8 +57,8 @@ export default function ManualRegistrationPage() {
             city: "",
             zipCode: "",
         },
-        membershipType: "standard" as PatronMembership,
-        membershipStatus: "active" as PatronStatus,
+        membershipType: "standard" as MembershipType,
+        membershipStatus: "active" as MembershipStatus,
         guardianName: "",
         notes: "",
     });
