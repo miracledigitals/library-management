@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function getRole() {
+      return request.auth.token.role;
+    }
+    function isAdmin() {
+      return isAuthenticated() && getRole() == 'admin';
+    }
+    function isLibrarian() {
+      return isAuthenticated() && (getRole() == 'librarian' || getRole() == 'admin');
+    }
+    function isOwner(patronId) {
+      return isAuthenticated() && request.auth.uid == patronId;
+    }
+
+    match /books/{bookId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isLibrarian();
+    }
+    
+    match /patrons/{patronId} {
+      allow read: if isLibrarian() || isOwner(patronId);
+      allow create: if isLibrarian();
+      allow update: if isLibrarian() || 
+        (isOwner(patronId) && 
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['phone', 'address', 'firstName', 'lastName']));
+    }
+    
+    match /checkouts/{checkoutId} {
+      allow read: if isLibrarian() || 
+        isOwner(resource.data.patronId);
+      allow create, update: if isLibrarian();
+    }
+    
+    match /activity_logs/{logId} {
+      allow read: if isLibrarian();
+      allow create: if isAuthenticated();
+    }
+  }
+}
