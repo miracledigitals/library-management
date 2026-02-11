@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { usePatron, useUpdatePatron } from "@/lib/api/patrons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,28 +49,33 @@ export default function PatronDetailPage() {
 
     if (isLoading) {
         return (
-            <DashboardLayout>
-                <div className="flex h-64 items-center justify-center">
+            <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+                <DashboardLayout>
+                    <div className="flex h-64 items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
             </DashboardLayout>
+            </ProtectedRoute>
         );
     }
 
     if (!patron) {
         return (
-            <DashboardLayout>
-                <div className="text-center py-12">
+            <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+                <DashboardLayout>
+                    <div className="text-center py-12">
                     <h2 className="text-2xl font-bold text-muted-foreground">Patron not found</h2>
                     <Button variant="link" onClick={() => router.push("/patrons")}>Back to list</Button>
                 </div>
             </DashboardLayout>
+            </ProtectedRoute>
         );
     }
 
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
+        <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+            <DashboardLayout>
+                <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" onClick={() => router.push("/patrons")} className="gap-2">
                         <ArrowLeft className="h-4 w-4" /> Back to List
@@ -206,5 +212,6 @@ export default function PatronDetailPage() {
                 </div>
             </div>
         </DashboardLayout>
+        </ProtectedRoute>
     );
 }

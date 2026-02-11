@@ -180,5 +180,6 @@ export default function PatronsPage() {
                 </div>
             </div>
         </DashboardLayout>
+        </ProtectedRoute>
     );
 }

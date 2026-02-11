@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useCreatePatron } from "@/lib/api/patrons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,8 +95,9 @@ export default function ManualRegistrationPage() {
 
     if (isRegistered) {
         return (
-            <DashboardLayout>
-                <div className="max-w-2xl mx-auto py-12">
+            <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+                <DashboardLayout>
+                    <div className="max-w-2xl mx-auto py-12">
                     <Card className="border-2 border-emerald-500 shadow-lg overflow-hidden">
                         <CardHeader className="text-center bg-emerald-500 text-white p-8">
                             <div className="mx-auto h-16 w-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
@@ -150,12 +152,14 @@ export default function ManualRegistrationPage() {
                     </Card>
                 </div>
             </DashboardLayout>
+            </ProtectedRoute>
         );
     }
 
     return (
-        <DashboardLayout>
-            <div className="max-w-4xl mx-auto space-y-6">
+        <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+            <DashboardLayout>
+                <div className="max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between border-b pb-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Manual Onboarding Flow</h1>
@@ -376,5 +380,6 @@ export default function ManualRegistrationPage() {
                 </form>
             </div>
         </DashboardLayout>
+        </ProtectedRoute>
     );
 }

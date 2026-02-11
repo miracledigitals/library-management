@@ -14,6 +14,7 @@ interface AuthContextType {
     register: (email: string, password: string, fullName: string, role: "admin" | "patron") => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
     isAdmin: boolean;
     isLibrarian: boolean;
     isPatron: boolean;
@@ -27,10 +28,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [lastUserId, setLastUserId] = useState<string | null>(null);
     const fetchingProfileFor = React.useRef<string | null>(null);
+    const isMounted = React.useRef(true);
+    const isBypassActive = React.useRef(false);
 
     useEffect(() => {
-        let isMounted = true;
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
+    const refreshProfile = async () => {
+        if (!user?.id || !isSupabaseConfigured) return;
+        
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (!isMounted.current) return;
+
+            if (data && !error) {
+                setProfile({
+                    id: data.id,
+                    email: data.email,
+                    displayName: data.display_name,
+                    role: data.role,
+                    currentCheckouts: data.current_checkouts,
+                    finesDue: parseFloat(data.fines_due),
+                });
+            }
+        } catch (err) {
+            console.error("Error refreshing profile:", err);
+        }
+    };
+
+    useEffect(() => {
         if (!isSupabaseConfigured) {
             console.warn("Supabase not configured. Using Demo Mode.");
             setUser({
@@ -47,8 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const handleUserChange = async (supabaseUser: User | null) => {
-            if (!isMounted) return;
+        const handleUserChange = async (supabaseUser: any) => {
+            if (!isMounted.current) return;
+
+            // Handle Admin Bypass
+            if (isBypassActive.current && !supabaseUser) {
+                return;
+            }
 
             if (!supabaseUser) {
                 setUser(null);
@@ -81,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .eq('id', supabaseUser.id)
                     .single();
 
-                if (!isMounted || fetchingProfileFor.current !== supabaseUser.id) return;
+                if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
 
                 if (data && !error) {
                     setUser(supabaseUser);
@@ -105,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (err) {
                 console.error("Error in handleUserChange:", err);
             } finally {
-                if (isMounted && fetchingProfileFor.current === supabaseUser.id) {
+                if (isMounted.current && fetchingProfileFor.current === supabaseUser.id) {
                     setLoading(false);
                     fetchingProfileFor.current = null;
                 }
@@ -115,11 +155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const getInitialSession = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (isMounted) {
+                if (isMounted.current) {
                     await handleUserChange(session?.user ?? null);
                 }
             } catch (err) {
-                if (isMounted) {
+                if (isMounted.current) {
                     console.error("Error getting initial session:", err);
                     setLoading(false);
                 }
@@ -129,13 +169,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getInitialSession();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (isMounted) {
+            if (isMounted.current) {
                 await handleUserChange(session?.user ?? null);
             }
         });
 
         return () => {
-            isMounted = false;
             subscription.unsubscribe();
         };
     }, []);
@@ -143,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string) => {
         // Admin Bypass Logic
         if (email === "mcmikeyofficial@gmail.com" && password === "Mcmikey@123") {
+            setLoading(true);
             console.log("Admin bypass login triggered");
             const adminUser = {
                 id: "admin-bypass-id",
@@ -154,12 +194,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 displayName: "System Admin",
                 role: "admin",
             };
+            
+            // Explicitly set these to bypass handleUserChange clearing them
+            isBypassActive.current = true;
             setUser(adminUser as any);
             setProfile(adminProfile);
+            setLastUserId("admin-bypass-id");
+            
+            // Wait a tiny bit to ensure state updates before loading: false
+            setTimeout(() => {
+                if (isMounted.current) {
+                    setLoading(false);
+                }
+            }, 100);
             return;
         }
 
         if (!isSupabaseConfigured) {
+            setLoading(true);
             console.log("Mock login triggered for:", email);
             const role = email.includes("admin") ? "admin" :
                 email.includes("patron") ? "patron" : "librarian";
@@ -167,8 +219,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const name = role === "admin" ? "Demo Admin" :
                 role === "patron" ? "Demo Patron" : "Demo Librarian";
 
-            setUser({ id: `demo-${role}`, email });
-            setProfile({ id: `demo-${role}`, email, displayName: name, role: role as any });
+            const userId = `demo-${role}`;
+            setUser({ id: userId, email });
+            setProfile({ id: userId, email, displayName: name, role: role as any });
+            setLastUserId(userId);
+            setLoading(false);
             return;
         }
         
@@ -189,21 +244,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
         if (!isSupabaseConfigured) {
+            setLoading(true);
             console.log("Mock registration triggered for:", email, "with role:", role);
-            setUser({ id: `demo-${role}`, email });
-            setProfile({ id: `demo-${role}`, email, displayName: fullName, role: role });
+            const userId = `demo-${role}`;
+            setUser({ id: userId, email });
+            setProfile({ id: userId, email, displayName: fullName, role });
+            setLastUserId(userId);
+            setLoading(false);
             return;
         }
+
         const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
                     full_name: fullName,
-                    role: role, // Pass role to metadata for potential trigger use
-                }
-            }
+                    role: role,
+                },
+            },
         });
+
         if (error) throw error;
     };
 
@@ -225,46 +286,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     redirectTo: `${window.location.origin}/dashboard`,
                 }
             });
-            if (error) {
-                console.error("Google login error:", error);
-                throw error;
-            }
+
+            if (error) throw error;
         } catch (error: any) {
-            console.error("Catch block google login error:", error);
-            throw error;
+            console.error("Google Auth Error:", error);
+            toast.error(error.message || "Failed to login with Google");
         }
     };
 
     const logout = async () => {
-        if (!isSupabaseConfigured) {
+        if (!isSupabaseConfigured || user?.id === "admin-bypass-id" || isBypassActive.current) {
+            isBypassActive.current = false;
             setUser(null);
             setProfile(null);
-            return;
+            setLastUserId(null);
+            if (!isSupabaseConfigured) return;
         }
         await supabase.auth.signOut();
     };
 
-    const value = {
-        user,
-        profile,
-        loading,
-        login,
-        register,
-        loginWithGoogle,
-        logout,
-        isAdmin: profile?.role === "admin",
-        isLibrarian: profile?.role === "librarian" || profile?.role === "admin",
-        isPatron: profile?.role === "patron",
-    };
+    const isAdmin = profile?.role === "admin";
+    const isLibrarian = profile?.role === "librarian" || profile?.role === "admin";
+    const isPatron = profile?.role === "patron";
 
     return (
-        <AuthContext.Provider value={value}>
-            {!loading && children}
+        <AuthContext.Provider
+            value={{
+                user,
+                profile,
+                loading,
+                login,
+                register,
+                loginWithGoogle,
+                logout,
+                refreshProfile,
+                isAdmin,
+                isLibrarian,
+                isPatron,
+            }}
+        >
+            {children}
         </AuthContext.Provider>
     );
 }
 
-export const useAuth = () => {
+export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
         throw new Error("useAuth must be used within an AuthProvider");

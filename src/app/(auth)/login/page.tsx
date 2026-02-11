@@ -43,7 +43,7 @@ export default function LoginPage() {
             } else {
                 await login(email, password);
                 toast.success("Logged in successfully");
-                router.replace("/dashboard");
+                // Redirect will be handled by useEffect to avoid double redirect issues
             }
         } catch (error: any) {
             toast.error(error.message || `Failed to ${isRegistering ? "register" : "login"}`);

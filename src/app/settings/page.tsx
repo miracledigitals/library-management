@@ -24,8 +24,8 @@ import { useTheme } from "next-themes";
 import { useUpdateProfile } from "@/lib/api/profiles";
 
 export default function SettingsPage() {
-    const { profile } = useAuth();
-    const { theme, setTheme } = useTheme();
+    const { profile, refreshProfile } = useAuth();
+    const { theme, setTheme, resolvedTheme } = useTheme();
     const updateProfile = useUpdateProfile();
     const [displayName, setDisplayName] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -47,6 +47,7 @@ export default function SettingsPage() {
                 id: profile.id,
                 displayName: displayName
             });
+            await refreshProfile();
             toast.success("Profile updated successfully");
         } catch (error: any) {
             toast.error(error.message || "Failed to update profile");
@@ -172,7 +173,7 @@ export default function SettingsPage() {
                                         <p className="text-sm text-muted-foreground">Toggle between light and dark themes.</p>
                                     </div>
                                     <Checkbox 
-                                        checked={theme === "dark"} 
+                                        checked={resolvedTheme === "dark"} 
                                         onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
                                     />
                                 </div>

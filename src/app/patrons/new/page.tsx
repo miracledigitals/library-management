@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useCreatePatron } from "@/lib/api/patrons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,8 +77,9 @@ export default function NewPatronPage() {
     };
 
     return (
-        <DashboardLayout>
-            <div className="max-w-4xl mx-auto space-y-6">
+        <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+            <DashboardLayout>
+                <div className="max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Register Member</h1>
@@ -204,5 +206,6 @@ export default function NewPatronPage() {
                 </form>
             </div>
         </DashboardLayout>
+        </ProtectedRoute>
     );
 }
