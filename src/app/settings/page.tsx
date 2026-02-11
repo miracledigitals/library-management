@@ -3,7 +3,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, assertSupabaseConfigured } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,10 +61,6 @@ export default function SettingsPage() {
     };
 
     const handleChangePassword = async () => {
-        if (!isSupabaseConfigured) {
-            toast.info("Password changes are unavailable in demo mode.");
-            return;
-        }
         if (!currentPassword || !newPassword || !confirmNewPassword) {
             toast.error("All password fields are required.");
             return;
@@ -80,6 +76,7 @@ export default function SettingsPage() {
 
         setIsUpdatingPassword(true);
         try {
+            assertSupabaseConfigured();
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: profile.email,
                 password: currentPassword,

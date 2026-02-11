@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { Checkout } from "../../types";
 import { differenceInDays } from "date-fns";
 
@@ -18,10 +18,7 @@ export async function processReturn(
     damageTypes: string[] = [],
     notes: string = ""
 ) {
-    if (!isSupabaseConfigured) {
-        console.log("Mock return processed for:", checkoutId);
-        return { success: true, fineCharged: 0 };
-    }
+    assertSupabaseConfigured();
 
     // 1. Fetch current checkout to calculate overdue fine (client-side calculation for ease, or could be in RPC)
     const { data: checkout, error: fetchError } = await supabase
@@ -70,7 +67,7 @@ export async function processReturn(
 
 // Helper to find active checkout by ISBN/BookID
 export async function findActiveCheckout(bookId: string) {
-    if (!isSupabaseConfigured) return null;
+    assertSupabaseConfigured();
 
     const { data, error } = await supabase
         .from('checkouts')

@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchingProfileFor = React.useRef<string | null>(null);
     const profileRef = React.useRef<UserProfile | null>(null);
     const isMounted = React.useRef(true);
-    const isBypassActive = React.useRef(false);
+    const hasShownConfigError = React.useRef(false);
 
     useEffect(() => {
         isMounted.current = true;
@@ -72,28 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!isSupabaseConfigured) {
-            console.warn("Supabase not configured. Using Demo Mode.");
-            setUser({
-                id: "demo-user",
-                email: "librarian@demo.com",
-            });
-            setProfile({
-                id: "demo-user",
-                email: "librarian@demo.com",
-                displayName: "Demo Librarian",
-                role: "librarian",
-            });
+            if (!hasShownConfigError.current) {
+                toast.error("Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+                hasShownConfigError.current = true;
+            }
+            setUser(null);
+            setProfile(null);
             setLoading(false);
             return;
         }
 
         const handleUserChange = async (supabaseUser: User | null) => {
             if (!isMounted.current) return;
-
-            // Handle Admin Bypass
-            if (isBypassActive.current && !supabaseUser) {
-                return;
-            }
 
             if (!supabaseUser) {
                 setUser(null);
@@ -185,51 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
-        // Admin Bypass Logic
-        if (email === "mcmikeyofficial@gmail.com" && password === "Mcmikey@123") {
-            setLoading(true);
-            console.log("Admin bypass login triggered");
-            const adminUser: Partial<User> = {
-                id: "admin-bypass-id",
-                email: "mcmikeyofficial@gmail.com",
-            };
-            const adminProfile: UserProfile = {
-                id: "admin-bypass-id",
-                email: "mcmikeyofficial@gmail.com",
-                displayName: "System Admin",
-                role: "admin",
-            };
-            
-            // Explicitly set these to bypass handleUserChange clearing them
-            isBypassActive.current = true;
-            setUser(adminUser);
-            setProfile(adminProfile);
-            lastUserId.current = "admin-bypass-id";
-            
-            // Wait a tiny bit to ensure state updates before loading: false
-            setTimeout(() => {
-                if (isMounted.current) {
-                    setLoading(false);
-                }
-            }, 100);
-            return;
-        }
-
         if (!isSupabaseConfigured) {
-            setLoading(true);
-            console.log("Mock login triggered for:", email);
-            const role: UserProfile["role"] = email.includes("admin") ? "admin" :
-                email.includes("patron") ? "patron" : "librarian";
-
-            const name = role === "admin" ? "Demo Admin" :
-                role === "patron" ? "Demo Patron" : "Demo Librarian";
-
-            const userId = `demo-${role}`;
-            setUser({ id: userId, email });
-            setProfile({ id: userId, email, displayName: name, role });
-            lastUserId.current = userId;
-            setLoading(false);
-            return;
+            throw new Error("Supabase is not configured. Please set environment variables.");
         }
         
         // Ensure email is registered before allowing login
@@ -249,14 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
         if (!isSupabaseConfigured) {
-            setLoading(true);
-            console.log("Mock registration triggered for:", email, "with role:", role);
-            const userId = `demo-${role}`;
-            setUser({ id: userId, email });
-            setProfile({ id: userId, email, displayName: fullName, role });
-            lastUserId.current = userId;
-            setLoading(false);
-            return;
+                throw new Error("Supabase is not configured. Please set environment variables.");
         }
 
         if (role === "admin" && profileRef.current?.role !== "admin") {
@@ -278,12 +218,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithGoogle = async () => {
-        console.log("loginWithGoogle called, isSupabaseConfigured:", isSupabaseConfigured);
         if (!isSupabaseConfigured) {
-            toast.error("Supabase is not configured. Please check your .env file.");
-            console.log("Mock google login triggered - defaulting to Librarian");
-            login("librarian@demo.com", "password");
-            return;
+            throw new Error("Supabase is not configured. Please set environment variables.");
         }
         try {
             const { error } = await supabase.auth.signInWithOAuth({
@@ -305,12 +241,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = async () => {
-        if (!isSupabaseConfigured || user?.id === "admin-bypass-id" || isBypassActive.current) {
-            isBypassActive.current = false;
+        if (!isSupabaseConfigured) {
             setUser(null);
             setProfile(null);
             lastUserId.current = null;
-            if (!isSupabaseConfigured) return;
+            return;
         }
         await supabase.auth.signOut();
     };

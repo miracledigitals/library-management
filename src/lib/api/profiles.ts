@@ -1,16 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 
 export function useUpdateProfile() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async ({ id, displayName }: { id: string; displayName: string }) => {
-            if (!isSupabaseConfigured) {
-                // Mock update for demo mode
-                console.log("Mock profile update for:", id, "New name:", displayName);
-                return;
-            }
+            assertSupabaseConfigured();
 
             const { error } = await supabase
                 .from('profiles')

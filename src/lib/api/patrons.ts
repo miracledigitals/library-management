@@ -3,29 +3,8 @@ import {
     useMutation,
     useQueryClient
 } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { Patron } from "../../types";
-
-const MOCK_PATRONS: Patron[] = [
-    {
-        id: "p1",
-        memberId: "LIB-2024-001",
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com",
-        phone: "555-0101",
-        address: { street: "123 Main St", city: "Library Village", zipCode: "12345" },
-        joinedAt: new Date().toISOString(),
-        expiryDate: new Date().toISOString(),
-        membershipStatus: "active",
-        membershipType: "standard",
-        finesDue: 0,
-        currentCheckouts: 1,
-        maxBooksAllowed: 5,
-        totalCheckoutsHistory: 12,
-        notes: ""
-    }
-];
 
 type PatronRow = {
     id: string;
@@ -88,17 +67,7 @@ export function usePatrons(filters?: { search?: string; type?: string; status?: 
     return useQuery({
         queryKey: ["patrons", filters],
         queryFn: async () => {
-            if (!isSupabaseConfigured) {
-                let patrons = [...MOCK_PATRONS];
-                if (filters?.search) {
-                    const s = filters.search.toLowerCase();
-                    patrons = patrons.filter(p =>
-                        p.firstName.toLowerCase().includes(s) ||
-                        p.lastName.toLowerCase().includes(s)
-                    );
-                }
-                return patrons;
-            }
+            assertSupabaseConfigured();
 
             let query = supabase
                 .from('patrons')
@@ -128,9 +97,7 @@ export function usePatron(id: string) {
         queryKey: ["patrons", id],
         queryFn: async () => {
             if (!id) return null;
-            if (!isSupabaseConfigured) {
-                return MOCK_PATRONS.find(p => p.id === id) || null;
-            }
+            assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('patrons')

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { BorrowRequest } from "../../types";
 import { performCheckout } from "./checkout-transaction";
 
@@ -31,7 +31,7 @@ export function useBorrowRequests(status?: BorrowRequest['status']) {
     return useQuery({
         queryKey: ["borrow_requests", status],
         queryFn: async () => {
-            if (!isSupabaseConfigured) return [];
+            assertSupabaseConfigured();
 
             let query = supabase
                 .from('borrow_requests')
@@ -53,7 +53,8 @@ export function usePatronRequests(patronId: string) {
     return useQuery({
         queryKey: ["borrow_requests", "patron", patronId],
         queryFn: async () => {
-            if (!patronId || !isSupabaseConfigured) return [];
+            if (!patronId) return [];
+            assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('borrow_requests')
@@ -72,6 +73,7 @@ export function useCreateBorrowRequest() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (request: Omit<BorrowRequest, "id" | "requestDate" | "status">) => {
+            assertSupabaseConfigured();
             const { data, error } = await supabase
                 .from('borrow_requests')
                 .insert([{
@@ -107,6 +109,7 @@ export function useProcessRequest() {
             adminNotes?: string,
             staffUserId: string
         }) => {
+            assertSupabaseConfigured();
             // 1. If approved, we also need to trigger the checkout transaction
             if (status === "approved") {
                 const { data: requestData, error: fetchError } = await supabase

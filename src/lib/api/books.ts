@@ -3,60 +3,14 @@ import {
     useMutation,
     useQueryClient
 } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { Book } from "../../types";
-
-const MOCK_BOOKS: Book[] = [
-    {
-        id: "1",
-        title: "Clean Code",
-        author: "Robert C. Martin",
-        isbn: "9780132350884",
-        genre: ["Technology"],
-        totalCopies: 5,
-        availableCopies: 5,
-        status: "available",
-        location: "Shelf T-1",
-        metadata: { language: "en" },
-        publisher: "Prentice Hall",
-        publishedYear: 2008,
-        description: "Even bad code can function. But if code isn't clean, it can bring a development organization to its knees.",
-        coverImage: null,
-        addedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    },
-    {
-        id: "2",
-        title: "The Hobbit",
-        author: "J.R.R. Tolkien",
-        isbn: "9780547928227",
-        genre: ["Fiction", "Fantasy"],
-        totalCopies: 3,
-        availableCopies: 2,
-        status: "available",
-        location: "Shelf F-4",
-        metadata: { language: "en" },
-        publisher: "George Allen & Unwin",
-        publishedYear: 1937,
-        description: "Bilbo Baggins is a hobbit who enjoys a comfortable, unambitious life, rarely traveling any farther than his pantry or cellar.",
-        coverImage: null,
-        addedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    }
-];
 
 export function useBooks(filters?: { genre?: string; status?: string; search?: string }) {
     return useQuery({
         queryKey: ["books", filters],
         queryFn: async () => {
-            if (!isSupabaseConfigured) {
-                let books = [...MOCK_BOOKS];
-                if (filters?.search) {
-                    const s = filters.search.toLowerCase();
-                    books = books.filter(b => b.title.toLowerCase().includes(s));
-                }
-                return books;
-            }
+            assertSupabaseConfigured();
 
             let query = supabase
                 .from('books')
@@ -86,9 +40,7 @@ export function useBook(id: string) {
         queryKey: ["books", id],
         queryFn: async () => {
             if (!id) return null;
-            if (!isSupabaseConfigured) {
-                return MOCK_BOOKS.find(b => b.id === id) || null;
-            }
+            assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('books')

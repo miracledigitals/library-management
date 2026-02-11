@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 
 export async function performCheckout(
     patronId: string,
@@ -6,10 +6,7 @@ export async function performCheckout(
     staffUserId: string,
     dueDate: Date
 ) {
-    if (!isSupabaseConfigured) {
-        console.log("Mock checkout performed for patron:", patronId, "books:", bookIds);
-        return { success: true, count: bookIds.length };
-    }
+    assertSupabaseConfigured();
 
     const { data, error } = await supabase.rpc('perform_checkout', {
         p_patron_id: patronId,

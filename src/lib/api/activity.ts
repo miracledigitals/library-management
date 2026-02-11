@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { ActivityLog } from "../../types";
 
 export function useRecentActivity(count: number = 10, userId?: string) {
     return useQuery({
         queryKey: ["activity_logs", count, userId],
         queryFn: async () => {
-            if (!isSupabaseConfigured) return [];
+            assertSupabaseConfigured();
 
             let query = supabase
                 .from('activity_logs')

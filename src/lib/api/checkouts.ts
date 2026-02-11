@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { supabase, assertSupabaseConfigured } from "../supabase";
 import { Checkout } from "../../types";
 import { addDays } from "date-fns";
 
@@ -53,7 +53,8 @@ export function usePatronCheckouts(patronId: string | undefined) {
     return useQuery({
         queryKey: ["checkouts", "patron", patronId],
         queryFn: async () => {
-            if (!patronId || !isSupabaseConfigured) return [];
+            if (!patronId) return [];
+            assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('checkouts')
@@ -72,7 +73,7 @@ export function useActiveCheckouts() {
     return useQuery({
         queryKey: ["checkouts", "active"],
         queryFn: async () => {
-            if (!isSupabaseConfigured) return [];
+            assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('checkouts')
@@ -90,6 +91,7 @@ export function useRenewLoan() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (checkout: Checkout) => {
+            assertSupabaseConfigured();
             if (checkout.renewalsCount >= checkout.maxRenewals) {
                 throw new Error("Maximum renewals reached for this item");
             }
