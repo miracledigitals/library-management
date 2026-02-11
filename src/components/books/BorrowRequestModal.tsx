@@ -26,7 +26,6 @@ import { format, addDays } from "date-fns";
 import { Book as BookType } from "@/types";
 import { useCreateBorrowRequest } from "@/lib/api/requests";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 interface BorrowRequestModalProps {
     book: BookType;
@@ -70,8 +69,9 @@ export function BorrowRequestModal({
             toast.success("Borrow application submitted!");
             onOpenChange(false);
             setStep(1); // Reset for next time
-        } catch (error) {
-            toast.error("Failed to submit application");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to submit application";
+            toast.error(message);
         }
     };
 
@@ -124,7 +124,7 @@ export function BorrowRequestModal({
                                         onCheckedChange={(v) => setIsSlowReader(v as boolean)}
                                     />
                                     <Label htmlFor="slow-reader" className="text-sm cursor-pointer">
-                                        I'm a slow reader - request extended loan (21 days)
+                                        I&apos;m a slow reader - request extended loan (21 days)
                                     </Label>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground ml-6 italic">

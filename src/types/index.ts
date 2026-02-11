@@ -76,7 +76,7 @@ export interface ActivityLog {
     description: string;
     userId: string;
     targetId: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     timestamp: string;
 }
 

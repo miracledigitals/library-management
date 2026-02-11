@@ -6,13 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     User,
-    Mail,
     Calendar,
     CreditCard,
     History,
     ShieldCheck,
-    Phone,
-    MapPin,
     AlertTriangle,
     Info,
     FileText,

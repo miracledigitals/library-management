@@ -1,5 +1,4 @@
 import { supabase, isSupabaseConfigured } from "../supabase";
-import { Book, Patron, Checkout } from "../../types";
 
 export async function performCheckout(
     patronId: string,

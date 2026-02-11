@@ -3,7 +3,18 @@ import { supabase, isSupabaseConfigured } from "../supabase";
 import { BorrowRequest } from "../../types";
 import { performCheckout } from "./checkout-transaction";
 
-function mapBorrowRequestFromDB(data: any): BorrowRequest {
+type BorrowRequestRow = {
+    id: string;
+    book_id: string;
+    patron_id: string;
+    requester_name: string;
+    book_title: string;
+    created_at: string;
+    status: BorrowRequest["status"];
+    admin_notes: string | null;
+};
+
+function mapBorrowRequestFromDB(data: BorrowRequestRow): BorrowRequest {
     return {
         id: data.id,
         bookId: data.book_id,
@@ -12,7 +23,7 @@ function mapBorrowRequestFromDB(data: any): BorrowRequest {
         bookTitle: data.book_title,
         requestDate: data.created_at,
         status: data.status,
-        adminNotes: data.admin_notes
+        adminNotes: data.admin_notes ?? undefined
     };
 }
 

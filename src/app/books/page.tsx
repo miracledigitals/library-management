@@ -29,7 +29,7 @@ import { useDeleteBook } from "@/lib/api/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateBorrowRequest, usePatronRequests } from "@/lib/api/requests";
 import { Loader2, BookCheck, LayoutGrid, List as ListIcon } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { BorrowRequestModal } from "@/components/books/BorrowRequestModal";
 import { Book as BookType } from "@/types";
@@ -50,7 +50,6 @@ export default function BooksPage() {
     const createRequest = useCreateBorrowRequest();
 
     const isPatron = profile?.role === "patron";
-    const canManageBooks = profile?.role === "admin" || profile?.role === "librarian";
     const canBulkDelete = profile?.role === "admin";
 
     const resetFilters = () => {
@@ -66,8 +65,9 @@ export default function BooksPage() {
             toast.success(`${selectedIds.length} books deleted.`);
             setSelectedIds([]);
             refetch(); // Re-fetch books after deletion
-        } catch (error) {
-            toast.error("Failed to delete some books.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to delete some books.";
+            toast.error(message);
         }
     };
 
@@ -86,7 +86,7 @@ export default function BooksPage() {
         }
     };
 
-    const handleRequestBorrow = (book: any) => {
+    const handleRequestBorrow = (book: BookType) => {
         setSelectedBookForModal(book);
         setIsModalOpen(true);
     };
@@ -98,7 +98,7 @@ export default function BooksPage() {
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Books</h1>
                         <p className="text-muted-foreground">
-                            Manage your library's collection and inventory.
+                            Manage your library&apos;s collection and inventory.
                         </p>
                     </div>
                     <div className="flex gap-2">

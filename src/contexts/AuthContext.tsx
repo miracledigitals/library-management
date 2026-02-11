@@ -26,8 +26,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<Partial<User> | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [lastUserId, setLastUserId] = useState<string | null>(null);
+    const lastUserId = React.useRef<string | null>(null);
     const fetchingProfileFor = React.useRef<string | null>(null);
+    const profileRef = React.useRef<UserProfile | null>(null);
     const isMounted = React.useRef(true);
     const isBypassActive = React.useRef(false);
 
@@ -37,6 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isMounted.current = false;
         };
     }, []);
+
+    useEffect(() => {
+        profileRef.current = profile;
+    }, [profile]);
 
     const refreshProfile = async () => {
         if (!user?.id || !isSupabaseConfigured) return;
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const handleUserChange = async (supabaseUser: any) => {
+        const handleUserChange = async (supabaseUser: User | null) => {
             if (!isMounted.current) return;
 
             // Handle Admin Bypass
@@ -93,14 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!supabaseUser) {
                 setUser(null);
                 setProfile(null);
-                setLastUserId(null);
+                lastUserId.current = null;
                 fetchingProfileFor.current = null;
                 setLoading(false);
                 return;
             }
 
             // Avoid redundant fetches if the user ID hasn't changed or is already being fetched
-            if (supabaseUser.id === lastUserId && profile) {
+            if (supabaseUser.id === lastUserId.current && profileRef.current) {
                 setLoading(false);
                 return;
             }
@@ -110,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             fetchingProfileFor.current = supabaseUser.id;
-            setLastUserId(supabaseUser.id);
+            lastUserId.current = supabaseUser.id;
             setLoading(true);
 
             try {
@@ -184,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (email === "mcmikeyofficial@gmail.com" && password === "Mcmikey@123") {
             setLoading(true);
             console.log("Admin bypass login triggered");
-            const adminUser = {
+            const adminUser: Partial<User> = {
                 id: "admin-bypass-id",
                 email: "mcmikeyofficial@gmail.com",
             };
@@ -197,9 +202,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             // Explicitly set these to bypass handleUserChange clearing them
             isBypassActive.current = true;
-            setUser(adminUser as any);
+            setUser(adminUser);
             setProfile(adminProfile);
-            setLastUserId("admin-bypass-id");
+            lastUserId.current = "admin-bypass-id";
             
             // Wait a tiny bit to ensure state updates before loading: false
             setTimeout(() => {
@@ -213,7 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isSupabaseConfigured) {
             setLoading(true);
             console.log("Mock login triggered for:", email);
-            const role = email.includes("admin") ? "admin" :
+            const role: UserProfile["role"] = email.includes("admin") ? "admin" :
                 email.includes("patron") ? "patron" : "librarian";
 
             const name = role === "admin" ? "Demo Admin" :
@@ -221,8 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const userId = `demo-${role}`;
             setUser({ id: userId, email });
-            setProfile({ id: userId, email, displayName: name, role: role as any });
-            setLastUserId(userId);
+            setProfile({ id: userId, email, displayName: name, role });
+            lastUserId.current = userId;
             setLoading(false);
             return;
         }
@@ -249,7 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const userId = `demo-${role}`;
             setUser({ id: userId, email });
             setProfile({ id: userId, email, displayName: fullName, role });
-            setLastUserId(userId);
+            lastUserId.current = userId;
             setLoading(false);
             return;
         }
@@ -288,9 +293,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             if (error) throw error;
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to login with Google";
             console.error("Google Auth Error:", error);
-            toast.error(error.message || "Failed to login with Google");
+            toast.error(message);
         }
     };
 
@@ -299,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isBypassActive.current = false;
             setUser(null);
             setProfile(null);
-            setLastUserId(null);
+            lastUserId.current = null;
             if (!isSupabaseConfigured) return;
         }
         await supabase.auth.signOut();

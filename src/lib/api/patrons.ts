@@ -27,7 +27,28 @@ const MOCK_PATRONS: Patron[] = [
     }
 ];
 
-function mapPatronFromDB(data: any): Patron {
+type PatronRow = {
+    id: string;
+    member_id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address: Patron["address"];
+    joined_at: string;
+    expiry_date: string;
+    membership_status: Patron["membershipStatus"];
+    membership_type: Patron["membershipType"];
+    fines_due: string | number | null;
+    current_checkouts: number;
+    max_books_allowed: number;
+    total_checkouts_history: number;
+    notes: string;
+};
+
+function mapPatronFromDB(data: PatronRow): Patron {
+    const finesDue =
+        typeof data.fines_due === "number" ? data.fines_due : parseFloat(data.fines_due ?? "0");
     return {
         id: data.id,
         memberId: data.member_id,
@@ -40,7 +61,7 @@ function mapPatronFromDB(data: any): Patron {
         expiryDate: data.expiry_date,
         membershipStatus: data.membership_status,
         membershipType: data.membership_type,
-        finesDue: parseFloat(data.fines_due),
+        finesDue,
         currentCheckouts: data.current_checkouts,
         maxBooksAllowed: data.max_books_allowed,
         totalCheckoutsHistory: data.total_checkouts_history,
@@ -49,7 +70,7 @@ function mapPatronFromDB(data: any): Patron {
 }
 
 function mapPatronToDB(patron: Partial<Patron>) {
-    const data: any = {};
+    const data: Record<string, unknown> = {};
     if (patron.memberId) data.member_id = patron.memberId;
     if (patron.email) data.email = patron.email;
     if (patron.firstName) data.first_name = patron.firstName;
@@ -129,7 +150,7 @@ export function useCreatePatron() {
     return useMutation({
         mutationFn: async (patron: Omit<Patron, "id" | "joinedAt">) => {
             const dbData = {
-                ...mapPatronToDB(patron as any),
+                ...mapPatronToDB(patron),
                 joined_at: new Date().toISOString(),
                 current_checkouts: 0,
                 total_checkouts_history: 0,

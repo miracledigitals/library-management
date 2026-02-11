@@ -41,8 +41,9 @@ export default function BookDetailPage() {
             await deleteBook.mutateAsync(id as string);
             toast.success("Book deleted successfully");
             router.push("/books");
-        } catch (error) {
-            toast.error("Failed to delete book");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to delete book";
+            toast.error(message);
         }
     };
 
@@ -91,7 +92,7 @@ export default function BookDetailPage() {
                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
                                         This action cannot be undone. This will permanently delete the book
-                                        "{book.title}" from the library database.
+                                        &quot;{book.title}&quot; from the library database.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

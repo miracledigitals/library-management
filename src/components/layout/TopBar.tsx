@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Search, User, Settings, LogOut, UserCircle } from "lucide-react";
+import { Bell, Search, Settings, LogOut, UserCircle, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useState } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,13 +15,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 export function TopBar() {
     const { user, profile, logout } = useAuth();
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const metadata = user?.user_metadata;
+    const avatarUrl =
+        typeof metadata === "object" &&
+        metadata !== null &&
+        "avatar_url" in metadata
+            ? String((metadata as Record<string, unknown>).avatar_url ?? "")
+            : "";
 
     return (
-        <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-            <div className="relative w-96">
+        <header className="flex items-center gap-3 border-b bg-background px-4 py-3 md:h-16 md:px-6 md:py-0">
+            <div className="flex items-center gap-2">
+                <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0">
+                        <Sidebar className="w-full border-r-0" onNavigate={() => setMobileNavOpen(false)} />
+                    </SheetContent>
+                </Sheet>
+            </div>
+
+            <div className="relative flex-1 md:flex-none md:w-96">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
@@ -29,7 +53,7 @@ export function TopBar() {
                 />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     <span className="absolute right-2 top-2 flex h-2 w-2 rounded-full bg-destructive" />
@@ -39,7 +63,7 @@ export function TopBar() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent rounded-full">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={(user as any)?.user_metadata?.avatar_url || ""} />
+                                <AvatarImage src={avatarUrl} />
                                 <AvatarFallback className="bg-primary text-primary-foreground">
                                     {user?.email?.substring(0, 2).toUpperCase() || "LMS"}
                                 </AvatarFallback>

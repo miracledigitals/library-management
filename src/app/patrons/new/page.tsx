@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useCreatePatron } from "@/lib/api/patrons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -17,7 +17,7 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save, X, UserPlus } from "lucide-react";
+import { Loader2, X, UserPlus } from "lucide-react";
 import { MembershipType, MembershipStatus } from "@/types";
 
 export default function NewPatronPage() {
@@ -71,8 +71,9 @@ export default function NewPatronPage() {
             });
             toast.success(`Member registered with ID: ${memberId}`);
             router.push("/patrons");
-        } catch (error) {
-            toast.error("Failed to register member");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to register member";
+            toast.error(message);
         }
     };
 
@@ -176,7 +177,14 @@ export default function NewPatronPage() {
                         <CardContent className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label htmlFor="membershipType">Membership Type</Label>
-                                <Select value={formData.membershipType} onValueChange={handleTypeChange as any}>
+                                <Select
+                                    value={formData.membershipType}
+                                    onValueChange={(value: string) =>
+                                        handleTypeChange(
+                                            value === "premium" || value === "student" ? value : "standard"
+                                        )
+                                    }
+                                >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>

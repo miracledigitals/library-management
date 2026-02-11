@@ -42,8 +42,9 @@ export default function PatronDetailPage() {
         try {
             await updatePatron.mutateAsync({ id: patron.id!, finesDue: 0 });
             toast.success("Fines cleared successfully");
-        } catch (error) {
-            toast.error("Failed to clear fines");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to clear fines";
+            toast.error(message);
         }
     };
 

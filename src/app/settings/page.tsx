@@ -12,9 +12,7 @@ import {
     Bell, 
     Shield, 
     User, 
-    Moon, 
     Globe, 
-    Smartphone,
     Save,
     Lock
 } from "lucide-react";
@@ -25,7 +23,7 @@ import { useUpdateProfile } from "@/lib/api/profiles";
 
 export default function SettingsPage() {
     const { profile, refreshProfile } = useAuth();
-    const { theme, setTheme, resolvedTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const updateProfile = useUpdateProfile();
     const [displayName, setDisplayName] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -49,8 +47,9 @@ export default function SettingsPage() {
             });
             await refreshProfile();
             toast.success("Profile updated successfully");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to update profile");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to update profile";
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }

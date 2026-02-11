@@ -3,20 +3,44 @@ import { supabase, isSupabaseConfigured } from "../supabase";
 import { Checkout } from "../../types";
 import { addDays } from "date-fns";
 
-function mapCheckoutFromDB(data: any): Checkout {
+type CheckoutRow = {
+    id: string;
+    book_id: string;
+    patron_id: string;
+    checkout_date: string;
+    due_date: string;
+    returned_date: string | null;
+    status: Checkout["status"];
+    renewals_count: number;
+    max_renewals: number;
+    fine_accrued: string | number | null;
+    checked_out_by: string;
+    returned_to: string | null;
+    notes: string;
+    book_title: string;
+    book_isbn: string;
+    patron_name: string;
+    patron_member_id: string;
+};
+
+function mapCheckoutFromDB(data: CheckoutRow): Checkout {
+    const fineAccrued =
+        typeof data.fine_accrued === "number"
+            ? data.fine_accrued
+            : parseFloat(data.fine_accrued ?? "0");
     return {
         id: data.id,
         bookId: data.book_id,
         patronId: data.patron_id,
         checkoutDate: data.checkout_date,
         dueDate: data.due_date,
-        returnedDate: data.returned_date,
+        returnedDate: data.returned_date ?? undefined,
         status: data.status,
         renewalsCount: data.renewals_count,
         maxRenewals: data.max_renewals,
-        fineAccrued: parseFloat(data.fine_accrued),
+        fineAccrued,
         checkedOutBy: data.checked_out_by,
-        returnedTo: data.returned_to,
+        returnedTo: data.returned_to ?? undefined,
         notes: data.notes,
         bookTitle: data.book_title,
         bookIsbn: data.book_isbn,

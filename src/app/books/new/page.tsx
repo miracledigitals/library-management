@@ -62,8 +62,9 @@ export default function NewBookPage() {
             } else {
                 toast.error("No book found for this ISBN");
             }
-        } catch (error) {
-            toast.error("Failed to lookup ISBN");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to lookup ISBN";
+            toast.error(message);
         } finally {
             setIsLookingUp(false);
         }
@@ -75,8 +76,9 @@ export default function NewBookPage() {
             await createBook.mutateAsync(formData);
             toast.success("Book added successfully");
             router.push("/books");
-        } catch (error) {
-            toast.error("Failed to add book");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to add book";
+            toast.error(message);
         }
     };
 

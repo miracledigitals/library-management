@@ -8,14 +8,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
     Search,
     RotateCcw,
     User,
     Book as BookIcon,
     AlertCircle,
-    CheckCircle2,
     Loader2,
     Calendar
 } from "lucide-react";
@@ -58,8 +56,9 @@ export default function ReturnsPage() {
             } else {
                 setCheckout(activeCheckout);
             }
-        } catch (error) {
-            toast.error("Error searching for checkout");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Error searching for checkout";
+            toast.error(message);
         } finally {
             setIsSearching(false);
         }
@@ -76,8 +75,9 @@ export default function ReturnsPage() {
             setSearch("");
             setCondition("good");
             setSelectedDamages([]);
-        } catch (error: any) {
-            toast.error(error.message || "Return failed");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Return failed";
+            toast.error(message);
         } finally {
             setIsProcessing(false);
         }

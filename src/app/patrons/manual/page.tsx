@@ -27,9 +27,7 @@ import {
     Printer,
     UserPlus,
     AlertCircle,
-    Phone,
     Mail,
-    MapPin,
     Shield
 } from "lucide-react";
 import { MembershipType, MembershipStatus } from "@/types";
@@ -76,20 +74,27 @@ export default function ManualRegistrationPage() {
 
         try {
             await createPatron.mutateAsync({
-                ...formData,
+                memberId: newMemberId,
                 email: formData.hasNoEmail ? `no-email-${newMemberId}@library.system` : formData.email,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                phone: formData.phone,
+                address: formData.address,
+                membershipType: formData.membershipType,
+                membershipStatus: formData.membershipStatus,
+                notes: formData.notes,
                 maxBooksAllowed: formData.membershipType === "premium" ? 5 : (formData.membershipType === "student" ? 2 : 3),
                 currentCheckouts: 0,
                 totalCheckoutsHistory: 0,
                 finesDue: 0,
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-                memberId: newMemberId,
-            } as any);
+            });
             setMemberId(newMemberId);
             setIsRegistered(true);
             toast.success("Patron registered successfully!");
-        } catch (error) {
-            toast.error("Failed to register patron");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to register patron";
+            toast.error(message);
         }
     };
 
@@ -216,7 +221,7 @@ export default function ManualRegistrationPage() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Driver's License">Driver's License</SelectItem>
+                                            <SelectItem value="Driver's License">Driver&apos;s License</SelectItem>
                                             <SelectItem value="Student ID">Student ID</SelectItem>
                                             <SelectItem value="Passport">Passport</SelectItem>
                                             <SelectItem value="State ID">State ID</SelectItem>
@@ -328,7 +333,13 @@ export default function ManualRegistrationPage() {
                                     <Label htmlFor="membershipType" className="text-emerald-800">Tier Selection</Label>
                                     <Select
                                         value={formData.membershipType}
-                                        onValueChange={(v) => setFormData(d => ({ ...d, membershipType: v as any }))}
+                                        onValueChange={(v: string) =>
+                                            setFormData(d => ({
+                                                ...d,
+                                                membershipType:
+                                                    v === "premium" || v === "student" ? v : "standard"
+                                            }))
+                                        }
                                     >
                                         <SelectTrigger id="membershipType" className="bg-background border-emerald-200">
                                             <SelectValue />

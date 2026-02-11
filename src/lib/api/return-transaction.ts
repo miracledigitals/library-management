@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "../supabase";
-import { Book, Patron, Checkout } from "../../types";
+import { Checkout } from "../../types";
 import { differenceInDays } from "date-fns";
 
 export const DAMAGE_FINES: Record<string, number> = {

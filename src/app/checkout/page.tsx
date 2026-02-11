@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { usePatrons } from "@/lib/api/patrons";
 import { useBooks } from "@/lib/api/books";
@@ -17,7 +17,6 @@ import {
     Book as BookIcon,
     X,
     CheckCircle2,
-    AlertTriangle,
     ArrowRight,
     ShoppingCart,
     Loader2,
@@ -79,8 +78,9 @@ export default function CheckoutPage() {
             );
             toast.success("Checkout completed successfully!");
             setStep(3); // Confirmation step
-        } catch (error: any) {
-            toast.error(error.message || "Checkout failed");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Checkout failed";
+            toast.error(message);
         } finally {
             setIsProcessing(false);
         }

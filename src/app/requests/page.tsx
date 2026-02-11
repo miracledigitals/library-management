@@ -19,6 +19,7 @@ import { Check, X, Info, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useState } from "react";
+import { BorrowRequest } from "@/types";
 import {
     Dialog,
     DialogContent,
@@ -35,11 +36,11 @@ export default function RequestsPage() {
     const processRequest = useProcessRequest();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedRequest, setSelectedRequest] = useState<any>(null);
+    const [selectedRequest, setSelectedRequest] = useState<BorrowRequest | null>(null);
     const [actionType, setActionType] = useState<'approved' | 'denied'>('approved');
     const [notes, setNotes] = useState("");
 
-    const handleAction = (request: any, type: 'approved' | 'denied') => {
+    const handleAction = (request: BorrowRequest, type: 'approved' | 'denied') => {
         setSelectedRequest(request);
         setActionType(type);
         setNotes("");
@@ -56,8 +57,10 @@ export default function RequestsPage() {
             });
             toast.success(`Request ${status} successfully`);
             return true; // Indicate success
-        } catch (error: any) {
-            toast.error(error.message || `Failed to ${status} request`);
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error ? error.message : `Failed to ${status} request`;
+            toast.error(message);
             return false; // Indicate failure
         }
     };

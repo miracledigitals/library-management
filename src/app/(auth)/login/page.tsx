@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,16 @@ export default function LoginPage() {
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState<"admin" | "patron">("patron");
     const [loading, setLoading] = useState(false);
-    const { user, profile, loading: authLoading, login, register, loginWithGoogle } = useAuth();
+    const { user, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
+    const lastRedirectTo = useRef<string | null>(null);
 
     useEffect(() => {
-        if (!authLoading && user) {
-            router.replace("/dashboard");
-        }
+        if (authLoading || !user) return;
+        const target = "/dashboard";
+        if (lastRedirectTo.current === target) return;
+        lastRedirectTo.current = target;
+        router.replace(target);
     }, [user, authLoading, router]);
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -45,8 +48,12 @@ export default function LoginPage() {
                 toast.success("Logged in successfully");
                 // Redirect will be handled by useEffect to avoid double redirect issues
             }
-        } catch (error: any) {
-            toast.error(error.message || `Failed to ${isRegistering ? "register" : "login"}`);
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : `Failed to ${isRegistering ? "register" : "login"}`;
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -65,8 +72,9 @@ export default function LoginPage() {
     const handleGoogleLogin = async () => {
         try {
             await loginWithGoogle();
-        } catch (error: any) {
-            toast.error(error.message || "Failed to login with Google");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to login with Google";
+            toast.error(message);
         }
     };
 
@@ -88,7 +96,7 @@ export default function LoginPage() {
                     <div className="mt-auto">
                         <blockquote className="space-y-4">
                             <p className="text-2xl font-light leading-relaxed">
-                                "A library is not a luxury but one of the necessities of life. It is the heart of every community, a sanctuary for knowledge, and a bridge to the future."
+                                &ldquo;A library is not a luxury but one of the necessities of life. It is the heart of every community, a sanctuary for knowledge, and a bridge to the future.&rdquo;
                             </p>
                             <footer className="flex items-center space-x-2">
                                 <div className="h-px w-8 bg-white/50" />
@@ -138,7 +146,9 @@ export default function LoginPage() {
                                         <Label htmlFor="role">Role</Label>
                                         <Select
                                             value={role}
-                                            onValueChange={(value: any) => setRole(value)}
+                                            onValueChange={(value: string) =>
+                                                setRole(value === "admin" ? "admin" : "patron")
+                                            }
                                         >
                                             <SelectTrigger id="role" className="h-11 w-full">
                                                 <SelectValue placeholder="Select your role" />

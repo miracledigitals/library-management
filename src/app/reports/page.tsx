@@ -16,7 +16,6 @@ import {
     Pie,
     Cell
 } from "recharts";
-import { useBooks } from "@/lib/api/books";
 
 const checkoutData = [
     { name: "Mon", value: 12 },
@@ -46,8 +45,6 @@ const genreData = [
 const COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#F43F5E"];
 
 export default function ReportsPage() {
-    const { data: books } = useBooks();
-
     return (
         <DashboardLayout>
             <div className="space-y-6">

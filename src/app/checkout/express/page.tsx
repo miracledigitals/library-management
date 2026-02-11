@@ -8,7 +8,7 @@ import { performCheckout } from "@/lib/api/checkout-transaction";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     Zap,
@@ -20,7 +20,6 @@ import {
     AlertCircle,
     ShoppingCart,
     Loader2,
-    ArrowRight,
     Keyboard
 } from "lucide-react";
 import { toast } from "sonner";
@@ -113,8 +112,9 @@ export default function ExpressCheckoutPage() {
             setActivePatron(null);
             setCart([]);
             setLastAction({ type: 'success', message: `CHECKOUT COMPLETE for ${activePatron.firstName}` });
-        } catch (error: any) {
-            toast.error(error.message || "Checkout failed");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Checkout failed";
+            toast.error(message);
             setLastAction({ type: 'error', message: "System Error: Transaction Failed" });
         } finally {
             setIsProcessing(false);

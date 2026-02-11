@@ -29,7 +29,7 @@ const navItems = [
     { name: "Reports", href: "/reports", icon: BarChart3, roles: ["admin"] },
 ];
 
-export function Sidebar() {
+export function Sidebar({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
     const pathname = usePathname();
     const { profile } = useAuth();
 
@@ -38,7 +38,7 @@ export function Sidebar() {
     );
 
     return (
-        <div className="flex h-full w-64 flex-col border-r bg-card text-card-foreground">
+        <div className={cn("flex h-full w-64 flex-col border-r bg-card text-card-foreground", className)}>
             <div className="flex h-16 items-center border-b px-6">
                 <Link href="/" className="flex items-center gap-2 font-bold text-xl">
                     <Book className="h-6 w-6 text-primary" />
@@ -52,6 +52,7 @@ export function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={onNavigate}
                             className={cn(
                                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                                 isActive
@@ -68,6 +69,7 @@ export function Sidebar() {
             <div className="border-t p-4">
                 <Link
                     href="/settings"
+                    onClick={onNavigate}
                     className={cn(
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
                         pathname === "/settings" && "bg-accent text-accent-foreground"

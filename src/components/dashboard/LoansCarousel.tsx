@@ -4,7 +4,7 @@ import { usePatronCheckouts, useRenewLoan } from "@/lib/api/checkouts";
 import { useBook } from "@/lib/api/books";
 import { Checkout } from "@/types";
 import { format, isPast, isToday, addDays } from "date-fns";
-import { Calendar, RefreshCw, AlertCircle, Clock, Book as BookIcon } from "lucide-react";
+import { RefreshCw, Clock, Book as BookIcon } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,8 +61,9 @@ function LoanCard({ loan }: { loan: Checkout }) {
         try {
             await renewMutation.mutateAsync(loan);
             toast.success("Book loan renewed for 14 more days!");
-        } catch (error: any) {
-            toast.error(error.message || "Renewal failed");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Renewal failed";
+            toast.error(message);
         }
     };
 
