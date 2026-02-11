@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,14 @@ export default function LoginPage() {
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState<"admin" | "patron">("patron");
     const [loading, setLoading] = useState(false);
-    const { login, register, loginWithGoogle } = useAuth();
+    const { user, profile, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.replace("/dashboard");
+        }
+    }, [user, authLoading, router]);
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +43,7 @@ export default function LoginPage() {
             } else {
                 await login(email, password);
                 toast.success("Logged in successfully");
-                router.push("/dashboard");
+                router.replace("/dashboard");
             }
         } catch (error: any) {
             toast.error(error.message || `Failed to ${isRegistering ? "register" : "login"}`);
@@ -45,6 +51,16 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+
+    if (authLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
+    if (user) return null;
 
     const handleGoogleLogin = async () => {
         try {

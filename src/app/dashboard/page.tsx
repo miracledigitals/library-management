@@ -149,11 +149,13 @@ export default function DashboardPage() {
                                             <RotateCcw className="h-5 w-5" /> Return
                                         </Button>
                                     </Link>
-                                    <Link href="/books/new" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
-                                            <Plus className="h-5 w-5" /> Add Book
-                                        </Button>
-                                    </Link>
+                                    {profile?.role === "admin" && (
+                                        <Link href="/books/new" className="w-full">
+                                            <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                                <Plus className="h-5 w-5" /> Add Book
+                                            </Button>
+                                        </Link>
+                                    )}
                                     <Link href="/patrons/new" className="w-full">
                                         <Button className="w-full h-16 text-lg gap-2" variant="outline">
                                             <UserPlus className="h-5 w-5" /> New Member

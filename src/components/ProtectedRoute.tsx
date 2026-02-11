@@ -16,10 +16,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                router.push("/login");
+                router.replace("/login");
             } else if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
                 // Redirect to dashboard if they don't have the right role
-                router.push("/dashboard");
+                router.replace("/dashboard");
             }
         }
     }, [user, profile, loading, router, allowedRoles]);

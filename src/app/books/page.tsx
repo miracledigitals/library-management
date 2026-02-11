@@ -107,12 +107,14 @@ export default function BooksPage() {
                                 Delete Selected ({selectedIds.length})
                             </Button>
                         )}
-                        <Link href="/books/new">
-                            <Button className="gap-2">
-                                <Plus className="h-4 w-4" />
-                                Add New Book
-                            </Button>
-                        </Link>
+                        {profile?.role === "admin" && (
+                            <Link href="/books/new">
+                                <Button className="gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    Add New Book
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 

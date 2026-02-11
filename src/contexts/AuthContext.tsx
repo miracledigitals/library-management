@@ -25,6 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<Partial<User> | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [lastUserId, setLastUserId] = useState<string | null>(null);
+    const fetchingProfileFor = React.useRef<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -48,48 +50,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const handleUserChange = async (supabaseUser: User | null) => {
             if (!isMounted) return;
 
-            if (supabaseUser) {
-                try {
-                    // Fetch user profile from PostgreSQL
-                    const { data, error } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', supabaseUser.id)
-                        .single();
-
-                    if (!isMounted) return;
-
-                    if (data && !error) {
-                        setUser(supabaseUser);
-                        setProfile({
-                            id: data.id,
-                            email: data.email,
-                            displayName: data.display_name,
-                            role: data.role,
-                            currentCheckouts: data.current_checkouts,
-                            finesDue: parseFloat(data.fines_due),
-                        });
-                    } else {
-                        // For Google users, we want to allow them to register if they don't have a profile yet
-                        // The previous restriction was blocking new Google registrations
-                        setUser(supabaseUser);
-                        setProfile({
-                            id: supabaseUser.id,
-                            email: supabaseUser.email || "",
-                            displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
-                            role: "patron",
-                        });
-                    }
-                } catch (err) {
-                    console.error("Error in handleUserChange:", err);
-                }
-            } else {
+            if (!supabaseUser) {
                 setUser(null);
                 setProfile(null);
-            }
-            
-            if (isMounted) {
+                setLastUserId(null);
+                fetchingProfileFor.current = null;
                 setLoading(false);
+                return;
+            }
+
+            // Avoid redundant fetches if the user ID hasn't changed or is already being fetched
+            if (supabaseUser.id === lastUserId && profile) {
+                setLoading(false);
+                return;
+            }
+
+            if (fetchingProfileFor.current === supabaseUser.id) {
+                return;
+            }
+
+            fetchingProfileFor.current = supabaseUser.id;
+            setLastUserId(supabaseUser.id);
+            setLoading(true);
+
+            try {
+                // Fetch user profile from PostgreSQL
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', supabaseUser.id)
+                    .single();
+
+                if (!isMounted || fetchingProfileFor.current !== supabaseUser.id) return;
+
+                if (data && !error) {
+                    setUser(supabaseUser);
+                    setProfile({
+                        id: data.id,
+                        email: data.email,
+                        displayName: data.display_name,
+                        role: data.role,
+                        currentCheckouts: data.current_checkouts,
+                        finesDue: parseFloat(data.fines_due),
+                    });
+                } else {
+                    setUser(supabaseUser);
+                    setProfile({
+                        id: supabaseUser.id,
+                        email: supabaseUser.email || "",
+                        displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
+                        role: "patron",
+                    });
+                }
+            } catch (err) {
+                console.error("Error in handleUserChange:", err);
+            } finally {
+                if (isMounted && fetchingProfileFor.current === supabaseUser.id) {
+                    setLoading(false);
+                    fetchingProfileFor.current = null;
+                }
             }
         };
 
@@ -97,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (isMounted) {
-                    handleUserChange(session?.user ?? null);
+                    await handleUserChange(session?.user ?? null);
                 }
             } catch (err) {
                 if (isMounted) {
@@ -109,8 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         getInitialSession();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            handleUserChange(session?.user ?? null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (isMounted) {
+                await handleUserChange(session?.user ?? null);
+            }
         });
 
         return () => {
