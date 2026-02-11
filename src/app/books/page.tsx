@@ -82,7 +82,7 @@ export default function BooksPage() {
         if (books && selectedIds.length === books.length) {
             setSelectedIds([]);
         } else if (books) {
-            setSelectedIds(books.map(book => book.id));
+            setSelectedIds(books.map(book => book.id!).filter(Boolean));
         }
     };
 
@@ -219,11 +219,11 @@ export default function BooksPage() {
                                     </TableRow>
                                 ) : (
                                     books?.map((book) => (
-                                        <TableRow key={book.id}>
+                                        <TableRow key={book.id || `book-${book.isbn}`}>
                                             <TableCell>
                                                 <Checkbox
-                                                    checked={selectedIds.includes(book.id)}
-                                                    onCheckedChange={() => toggleSelect(book.id)}
+                                                    checked={selectedIds.includes(book.id || "")}
+                                                    onCheckedChange={() => toggleSelect(book.id || "")}
                                                 />
                                             </TableCell>
                                             <TableCell className="font-medium">{book.title}</TableCell>
@@ -295,7 +295,7 @@ export default function BooksPage() {
                             </div>
                         ) : (
                             books?.map((book) => (
-                                <Card key={book.id} className="overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+                                <Card key={book.id || `card-${book.isbn}`} className="overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
                                     <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                                         {book.coverImage ? (
                                             <img
@@ -364,7 +364,7 @@ export default function BooksPage() {
                     open={isModalOpen}
                     onOpenChange={setIsModalOpen}
                     patronId={user?.uid || ""}
-                    patronName={profile?.displayName || profile?.email || ""}
+                    patronName={profile?.displayName || profile?.email || "Patron"}
                 />
             )}
         </DashboardLayout>

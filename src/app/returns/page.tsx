@@ -70,7 +70,7 @@ export default function ReturnsPage() {
 
         setIsProcessing(true);
         try {
-            const result = await processReturn(checkout.id, user.uid, condition, selectedDamages);
+            const result = await processReturn(checkout.id, user.uid || "", condition, selectedDamages);
             toast.success(`Return processed. Fine: $${result.fineCharged.toFixed(2)}`);
             setCheckout(null);
             setSearch("");

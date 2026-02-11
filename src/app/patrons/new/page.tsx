@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Save, X, UserPlus } from "lucide-react";
-import { PatronMembership, PatronStatus } from "@/types";
+import { MembershipType, MembershipStatus } from "@/types";
 import { Timestamp } from "firebase/firestore";
 
 export default function NewPatronPage() {
@@ -34,8 +34,8 @@ export default function NewPatronPage() {
             city: "",
             zipCode: "",
         },
-        membershipType: "standard" as PatronMembership,
-        membershipStatus: "active" as PatronStatus,
+        membershipType: "standard" as MembershipType,
+        membershipStatus: "active" as MembershipStatus,
         maxBooksAllowed: 3,
         currentCheckouts: 0,
         totalCheckoutsHistory: 0,
@@ -44,7 +44,7 @@ export default function NewPatronPage() {
         expiryDate: Timestamp.fromDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1))), // 1 year from now
     });
 
-    const handleTypeChange = (value: PatronMembership) => {
+    const handleTypeChange = (value: MembershipType) => {
         let maxBooks = 3;
         if (value === "premium") maxBooks = 5;
         if (value === "student") maxBooks = 2;

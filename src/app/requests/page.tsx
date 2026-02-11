@@ -54,7 +54,7 @@ export default function RequestsPage() {
                 requestId: selectedRequest.id as string,
                 status: actionType,
                 adminNotes: notes,
-                staffUserId: user.uid
+                staffUserId: user.uid || ""
             });
             toast.success(`Request ${actionType === "approved" ? "approved" : "denied"} successfully`);
             setIsDialogOpen(false);

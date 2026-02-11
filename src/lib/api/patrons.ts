@@ -27,14 +27,16 @@ const MOCK_PATRONS: Patron[] = [
         lastName: "Doe",
         email: "john.doe@example.com",
         phone: "555-0101",
-        address: { street: "123 Main St", city: "Library Village", state: "LV", zip: "12345" },
+        address: { street: "123 Main St", city: "Library Village", zipCode: "12345" },
         joinedAt: Timestamp.now(),
+        expiryDate: Timestamp.now(),
         membershipStatus: "active",
-        membershipType: "regular",
+        membershipType: "standard",
         finesDue: 0,
         currentCheckouts: 1,
         maxBooksAllowed: 5,
-        totalCheckoutsHistory: 12
+        totalCheckoutsHistory: 12,
+        notes: ""
     },
     {
         id: "p2",
@@ -43,14 +45,16 @@ const MOCK_PATRONS: Patron[] = [
         lastName: "Smith",
         email: "jane.smith@example.com",
         phone: "555-0102",
-        address: { street: "456 Oak Ave", city: "Booktown", state: "BT", zip: "67890" },
+        address: { street: "456 Oak Ave", city: "Booktown", zipCode: "67890" },
         joinedAt: Timestamp.now(),
+        expiryDate: Timestamp.now(),
         membershipStatus: "active",
         membershipType: "premium",
         finesDue: 5.50,
         currentCheckouts: 3,
         maxBooksAllowed: 10,
-        totalCheckoutsHistory: 45
+        totalCheckoutsHistory: 45,
+        notes: ""
     }
 ];
 
@@ -72,7 +76,7 @@ export function usePatrons(filters?: { search?: string; type?: string; status?: 
 
             let q = query(patronsRef, orderBy("lastName", "asc"));
             const querySnapshot = await getDocs(q);
-            let patrons = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Patron));
+            let patrons = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Patron));
 
             // ... filtering logic ...
 
@@ -105,7 +109,7 @@ export function usePatron(id: string) {
             const docRef = doc(patronsRef, id);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() } as Patron;
+                return { ...docSnap.data(), id: docSnap.id } as Patron;
             }
             return null;
         },

@@ -21,6 +21,7 @@ import {
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { usePatronRequests } from "@/lib/api/requests";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
     const { profile, user } = useAuth();
@@ -90,11 +91,11 @@ export default function ProfilePage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className={`text-3xl font-bold ${profile.finesDue > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                                    <div className={`text-3xl font-bold ${(profile.finesDue || 0) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
                                         ${(profile.finesDue || 0).toFixed(2)}
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        {profile.finesDue > 0 ? "Please visit the desk to pay" : "Account in good standing"}
+                                        {(profile.finesDue || 0) > 0 ? "Please visit the desk to pay" : "Account in good standing"}
                                     </p>
                                 </CardContent>
                             </Card>

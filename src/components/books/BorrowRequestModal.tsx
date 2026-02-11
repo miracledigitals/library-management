@@ -59,7 +59,7 @@ export function BorrowRequestModal({
 
         try {
             await createRequest.mutateAsync({
-                bookId: book.id,
+                bookId: book.id || "",
                 patronId,
                 requesterName: patronName,
                 bookTitle: book.title,

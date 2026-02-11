@@ -74,7 +74,7 @@ export function useBooks(filters?: { genre?: string; status?: string; search?: s
 
             let q = query(booksRef, orderBy("title", "asc"));
             const querySnapshot = await getDocs(q);
-            let books = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Book));
+            let books = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Book));
 
             // ... filtering logic ...
 
@@ -106,7 +106,7 @@ export function useBook(id: string) {
             const docRef = doc(booksRef, id);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() } as Book;
+                return { ...docSnap.data(), id: docSnap.id } as Book;
             }
             return null;
         },

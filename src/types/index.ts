@@ -7,7 +7,7 @@ export type CheckoutStatus = 'active' | 'returned' | 'overdue' | 'lost';
 export type ActivityType = 'checkout' | 'return' | 'renew' | 'fine_paid' | 'patron_added' | 'book_added' | 'borrow_request' | 'request_approved' | 'request_denied';
 
 export interface Book {
-    id: string;
+    id?: string;
     isbn: string;                    // UNIQUE - primary identifier
     title: string;
     author: string;
@@ -30,7 +30,7 @@ export interface Book {
 }
 
 export interface Patron {
-    id: string;
+    id?: string;
     memberId: string;                // auto-generated (e.g., "MEM-2024-001")
     email: string;                   // linked to Firebase Auth
     firstName: string;
@@ -99,4 +99,6 @@ export interface UserProfile {
     email: string;
     role: 'admin' | 'librarian' | 'patron';
     displayName?: string;
+    currentCheckouts?: number;
+    finesDue?: number;
 }

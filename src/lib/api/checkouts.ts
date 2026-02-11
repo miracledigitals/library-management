@@ -15,7 +15,7 @@ export function usePatronCheckouts(patronId: string | undefined) {
                 where("status", "in", ["active", "overdue"])
             );
             const snap = await getDocs(q);
-            return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checkout));
+            return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checkout));
         },
         enabled: !!patronId,
     });

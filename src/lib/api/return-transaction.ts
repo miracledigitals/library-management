@@ -107,7 +107,7 @@ export async function processReturn(
             type: "return",
             description: `Book "${book.title}" returned by ${patron.firstName} ${patron.lastName}`,
             userId: staffUserId,
-            targetId: book.id,
+            targetId: book.id || checkout.bookId,
             metadata: {
                 patronId: checkout.patronId,
                 checkoutId: checkoutId,
