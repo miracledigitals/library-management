@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useCreateBook } from "@/lib/api/books";
-import { lookupISBN } from "@/lib/google-books";
+import { lookupISBN, searchBooks, GoogleBookSearchResult } from "@/lib/google-books";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,9 @@ export default function NewBookPage() {
     const router = useRouter();
     const createBook = useCreateBook();
     const [isLookingUp, setIsLookingUp] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<GoogleBookSearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     const [formData, setFormData] = useState({
         isbn: "",
@@ -70,6 +73,41 @@ export default function NewBookPage() {
         }
     };
 
+    const handleSearch = async () => {
+        if (!searchQuery.trim()) {
+            toast.error("Enter a title or author to search.");
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const results = await searchBooks(searchQuery.trim());
+            setSearchResults(results);
+            if (results.length === 0) {
+                toast.error("No books found for that search.");
+            }
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to search books";
+            toast.error(message);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSelectResult = (result: GoogleBookSearchResult) => {
+        setFormData(prev => ({
+            ...prev,
+            isbn: result.isbn || prev.isbn,
+            title: result.title,
+            author: result.authors.join(", "),
+            publisher: result.publisher,
+            publishedYear: parseInt(result.publishedDate.substring(0, 4)) || prev.publishedYear,
+            description: result.description,
+            coverImage: result.imageLinks?.thumbnail || null,
+            metadata: { ...prev.metadata, language: result.language }
+        }));
+        toast.success("Book details filled from search.");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -100,9 +138,50 @@ export default function NewBookPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Catalog Information</CardTitle>
-                                <CardDescription>Use ISBN lookup to automatically fill book details.</CardDescription>
+                            <CardDescription>Search by title or author, or use ISBN lookup to fill details.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="bookSearch">Search Books</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="bookSearch"
+                                        placeholder="Search by title or author"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleSearch}
+                                        disabled={isSearching}
+                                    >
+                                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                                {searchResults.length > 0 && (
+                                    <div className="border rounded-md divide-y">
+                                        {searchResults.map((result) => (
+                                            <button
+                                                key={result.id}
+                                                type="button"
+                                                onClick={() => handleSelectResult(result)}
+                                                className="w-full text-left px-3 py-2 hover:bg-muted"
+                                            >
+                                                <div className="font-medium">{result.title}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {result.authors.join(", ") || "Unknown author"}
+                                                </div>
+                                                {result.isbn && (
+                                                    <div className="text-xs text-muted-foreground font-mono">
+                                                        {result.isbn}
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="isbn">ISBN</Label>
