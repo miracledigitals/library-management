@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { UserProfile } from "@/types";
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profileRef.current = profile;
     }, [profile]);
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (!user?.id || !isSupabaseConfigured) return;
         
         try {
@@ -68,7 +68,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (err) {
             console.error("Error refreshing profile:", err);
         }
-    };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (!isSupabaseConfigured) return;
+
+        const handleFocus = () => {
+            refreshProfile();
+        };
+
+        const handleVisibility = () => {
+            if (document.visibilityState === "visible") {
+                refreshProfile();
+            }
+        };
+
+        window.addEventListener("focus", handleFocus);
+        document.addEventListener("visibilitychange", handleVisibility);
+
+        const intervalId = window.setInterval(() => {
+            refreshProfile();
+        }, 60000);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibility);
+            window.clearInterval(intervalId);
+        };
+    }, [refreshProfile]);
 
     useEffect(() => {
         if (!isSupabaseConfigured) {
