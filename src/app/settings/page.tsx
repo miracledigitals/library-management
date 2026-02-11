@@ -34,12 +34,20 @@ export default function SettingsPage() {
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
     const [isRefreshingRole, setIsRefreshingRole] = useState(false);
     const [lastRoleRefresh, setLastRoleRefresh] = useState<Date | null>(null);
+    const [adminEmail, setAdminEmail] = useState("");
+    const [isForcingAdmin, setIsForcingAdmin] = useState(false);
 
     useEffect(() => {
         if (profile?.displayName) {
             setDisplayName(profile.displayName);
         }
     }, [profile]);
+
+    useEffect(() => {
+        if (profile?.email && !adminEmail) {
+            setAdminEmail(profile.email);
+        }
+    }, [profile, adminEmail]);
 
     if (!profile) return null;
 
@@ -116,6 +124,33 @@ export default function SettingsPage() {
         }
     };
 
+    const handleForceAdminRole = async () => {
+        if (!adminEmail.trim()) {
+            toast.error("Enter an email to apply the admin role.");
+            return;
+        }
+        setIsForcingAdmin(true);
+        try {
+            const response = await fetch("/api/admin/force-role", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: adminEmail.trim() })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || "Failed to force admin role.");
+            }
+            await refreshProfile();
+            setLastRoleRefresh(new Date());
+            toast.success("Admin role applied.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to force admin role.";
+            toast.error(message);
+        } finally {
+            setIsForcingAdmin(false);
+        }
+    };
+
     return (
         <ProtectedRoute>
             <DashboardLayout>
@@ -186,6 +221,30 @@ export default function SettingsPage() {
                                     </div>
                                     <Button variant="outline" size="sm" onClick={handleRoleRefresh} disabled={isRefreshingRole}>
                                         {isRefreshingRole ? "Refreshing..." : "Refresh Role"}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="h-5 w-5" /> Admin Bootstrap
+                                </CardTitle>
+                                <CardDescription>Force an admin role using server credentials.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="adminEmail">Target Email</Label>
+                                    <Input
+                                        id="adminEmail"
+                                        value={adminEmail}
+                                        onChange={(e) => setAdminEmail(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button onClick={handleForceAdminRole} disabled={isForcingAdmin}>
+                                        {isForcingAdmin ? "Applying..." : "Force Admin Role"}
                                     </Button>
                                 </div>
                             </CardContent>
