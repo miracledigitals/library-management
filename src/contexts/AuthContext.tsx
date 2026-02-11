@@ -10,6 +10,7 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    register: (email: string, password: string, fullName: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
     isAdmin: boolean;
@@ -106,6 +107,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
     };
 
+    const register = async (email: string, password: string, fullName: string) => {
+        if (!isSupabaseConfigured) {
+            console.log("Mock registration triggered for:", email);
+            setUser({ id: "demo-patron", email });
+            setProfile({ id: "demo-patron", email, displayName: fullName, role: "patron" });
+            return;
+        }
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                }
+            }
+        });
+        if (error) throw error;
+    };
+
     const loginWithGoogle = async () => {
         if (!isSupabaseConfigured) {
             console.log("Mock google login triggered - defaulting to Librarian");
@@ -132,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         loading,
         login,
+        register,
         loginWithGoogle,
         logout,
         isAdmin: profile?.role === "admin",

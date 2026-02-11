@@ -11,21 +11,29 @@ import { Book, Chrome } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
+    const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
     const [loading, setLoading] = useState(false);
-    const { login, loginWithGoogle } = useAuth();
+    const { login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
 
-    const handleEmailLogin = async (e: React.FormEvent) => {
+    const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await login(email, password);
-            toast.success("Logged in successfully");
-            router.push("/dashboard");
+            if (isRegistering) {
+                await register(email, password, fullName);
+                toast.success("Account created! You can now log in.");
+                setIsRegistering(false);
+            } else {
+                await login(email, password);
+                toast.success("Logged in successfully");
+                router.push("/dashboard");
+            }
         } catch (error: any) {
-            toast.error(error.message || "Failed to login");
+            toast.error(error.message || `Failed to ${isRegistering ? "register" : "login"}`);
         } finally {
             setLoading(false);
         }
@@ -35,7 +43,7 @@ export default function LoginPage() {
         try {
             await loginWithGoogle();
             toast.success("Logged in with Google");
-            router.push("/dashboard");
+            // Note: router.push happens in AuthContext onAuthStateChange
         } catch (error: any) {
             toast.error(error.message || "Failed to login with Google");
         }
@@ -50,13 +58,30 @@ export default function LoginPage() {
                             <Book className="h-6 w-6 text-primary-foreground" />
                         </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold">LMS Pro Login</CardTitle>
+                    <CardTitle className="text-2xl font-bold">
+                        {isRegistering ? "Create an Account" : "LMS Pro Login"}
+                    </CardTitle>
                     <CardDescription>
-                        Enter your credentials to access the library system
+                        {isRegistering
+                            ? "Enter your details to register as a library member"
+                            : "Enter your credentials to access the library system"}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <form onSubmit={handleEmailLogin} className="space-y-4">
+                    <form onSubmit={handleAuth} className="space-y-4">
+                        {isRegistering && (
+                            <div className="space-y-2">
+                                <Label htmlFor="fullName">Full Name</Label>
+                                <Input
+                                    id="fullName"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    required
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                />
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input
@@ -79,7 +104,9 @@ export default function LoginPage() {
                             />
                         </div>
                         <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? "Logging in..." : "Login"}
+                            {loading
+                                ? (isRegistering ? "Registering..." : "Logging in...")
+                                : (isRegistering ? "Sign Up" : "Login")}
                         </Button>
                     </form>
 
@@ -99,8 +126,19 @@ export default function LoginPage() {
                         Google
                     </Button>
                 </CardContent>
-                <CardFooter className="text-center text-sm text-muted-foreground">
-                    Contact your librarian if you've forgotten your credentials.
+                <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
+                    <div>
+                        {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
+                        <button
+                            onClick={() => setIsRegistering(!isRegistering)}
+                            className="text-primary hover:underline font-medium"
+                        >
+                            {isRegistering ? "Login" : "Sign Up"}
+                        </button>
+                    </div>
+                    {!isRegistering && (
+                        <div>Contact your librarian if you've forgotten your credentials.</div>
+                    )}
                 </CardFooter>
             </Card>
         </div>
