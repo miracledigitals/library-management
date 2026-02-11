@@ -10,7 +10,7 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, fullName: string) => Promise<void>;
+    register: (email: string, password: string, fullName: string, role: "admin" | "patron") => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
     isAdmin: boolean;
@@ -91,6 +91,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
+        // Admin Bypass Logic
+        if (email === "mcmikeyofficial@gmail.com" && password === "Mcmikey@123") {
+            console.log("Admin bypass login triggered");
+            const adminUser = {
+                id: "admin-bypass-id",
+                email: "mcmikeyofficial@gmail.com",
+            };
+            const adminProfile: UserProfile = {
+                id: "admin-bypass-id",
+                email: "mcmikeyofficial@gmail.com",
+                displayName: "System Admin",
+                role: "admin",
+            };
+            setUser(adminUser as any);
+            setProfile(adminProfile);
+            return;
+        }
+
         if (!isSupabaseConfigured) {
             console.log("Mock login triggered for:", email);
             const role = email.includes("admin") ? "admin" :
@@ -103,15 +121,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setProfile({ id: `demo-${role}`, email, displayName: name, role: role as any });
             return;
         }
+        
+        // Ensure email is registered before allowing login
+        const { data: profileCheck, error: profileError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (profileError || !profileCheck) {
+            throw new Error("This email is not registered. Please sign up first.");
+        }
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
     };
 
-    const register = async (email: string, password: string, fullName: string) => {
+    const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
         if (!isSupabaseConfigured) {
-            console.log("Mock registration triggered for:", email);
-            setUser({ id: "demo-patron", email });
-            setProfile({ id: "demo-patron", email, displayName: fullName, role: "patron" });
+            console.log("Mock registration triggered for:", email, "with role:", role);
+            setUser({ id: `demo-${role}`, email });
+            setProfile({ id: `demo-${role}`, email, displayName: fullName, role: role });
             return;
         }
         const { error } = await supabase.auth.signUp({
@@ -120,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             options: {
                 data: {
                     full_name: fullName,
+                    role: role, // Pass role to metadata for potential trigger use
                 }
             }
         });
