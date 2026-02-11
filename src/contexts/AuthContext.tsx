@@ -204,21 +204,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithGoogle = async () => {
+        console.log("loginWithGoogle called, isSupabaseConfigured:", isSupabaseConfigured);
         if (!isSupabaseConfigured) {
+            toast.error("Supabase is not configured. Please check your .env file.");
             console.log("Mock google login triggered - defaulting to Librarian");
             login("librarian@demo.com", "password");
             return;
         }
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                queryParams: {
-                    prompt: 'select_account',
-                },
-                redirectTo: `${window.location.origin}/dashboard`,
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    queryParams: {
+                        prompt: 'select_account',
+                    },
+                    redirectTo: `${window.location.origin}/dashboard`,
+                }
+            });
+            if (error) {
+                console.error("Google login error:", error);
+                throw error;
             }
-        });
-        if (error) throw error;
+        } catch (error: any) {
+            console.error("Catch block google login error:", error);
+            throw error;
+        }
     };
 
     const logout = async () => {
