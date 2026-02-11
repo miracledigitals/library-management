@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { UserProfile } from "@/types";
+import { toast } from "sonner";
 
 interface AuthContextType {
     user: Partial<User> | null;
@@ -48,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
 
         const handleUserChange = async (supabaseUser: User | null) => {
-            setUser(supabaseUser);
             if (supabaseUser) {
                 // Fetch user profile from PostgreSQL
                 const { data, error } = await supabase
@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .single();
 
                 if (data && !error) {
+                    setUser(supabaseUser);
                     setProfile({
                         id: data.id,
                         email: data.email,
@@ -67,7 +68,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         finesDue: parseFloat(data.fines_due),
                     });
                 } else {
-                    // Fallback or default role
+                    // If no profile exists, this is a new registration or an unregistered Google login
+                    // If it's a Google login and we want to restrict to registered emails only:
+                    if (supabaseUser.app_metadata?.provider === 'google') {
+                        // Check if email exists in profiles (registered via other means)
+                        const { data: emailExists } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('email', supabaseUser.email)
+                            .maybeSingle();
+
+                        if (!emailExists) {
+                            await supabase.auth.signOut();
+                            toast.error("This Google account is not registered. Please sign up first.");
+                            setProfile(null);
+                            setUser(null);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
+                    // Fallback or default role for new sign-ups (handled by DB trigger usually)
+                    setUser(supabaseUser);
                     setProfile({
                         id: supabaseUser.id,
                         email: supabaseUser.email || "",
@@ -76,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     });
                 }
             } else {
+                setUser(null);
                 setProfile(null);
             }
             setLoading(false);
@@ -165,6 +188,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            options: {
+                queryParams: {
+                    prompt: 'select_account',
+                },
+                redirectTo: `${window.location.origin}/dashboard`,
+            }
         });
         if (error) throw error;
     };
