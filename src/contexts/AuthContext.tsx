@@ -70,30 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             finesDue: parseFloat(data.fines_due),
                         });
                     } else {
-                        if (supabaseUser.app_metadata?.provider === 'google') {
-                            const { data: emailExists } = await supabase
-                                .from('profiles')
-                                .select('id')
-                                .eq('email', supabaseUser.email)
-                                .maybeSingle();
-
-                            if (!isMounted) return;
-
-                            if (!emailExists) {
-                                await supabase.auth.signOut();
-                                toast.error("This Google account is not registered. Please sign up first.");
-                                setProfile(null);
-                                setUser(null);
-                                setLoading(false);
-                                return;
-                            }
-                        }
-
+                        // For Google users, we want to allow them to register if they don't have a profile yet
+                        // The previous restriction was blocking new Google registrations
                         setUser(supabaseUser);
                         setProfile({
                             id: supabaseUser.id,
                             email: supabaseUser.email || "",
-                            displayName: supabaseUser.user_metadata?.full_name || "",
+                            displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
                             role: "patron",
                         });
                     }
