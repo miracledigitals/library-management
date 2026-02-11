@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Search, FilterX, AlertCircle, FileText } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function PatronsPage() {
     const [search, setSearch] = useState("");
@@ -39,7 +40,8 @@ export default function PatronsPage() {
     };
 
     return (
-        <DashboardLayout>
+        <ProtectedRoute allowedRoles={["admin", "librarian"]}>
+            <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>

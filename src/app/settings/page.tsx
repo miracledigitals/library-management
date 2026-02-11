@@ -19,22 +19,40 @@ import {
     Lock
 } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { useUpdateProfile } from "@/lib/api/profiles";
 
 export default function SettingsPage() {
     const { profile } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const updateProfile = useUpdateProfile();
+    const [displayName, setDisplayName] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (profile?.displayName) {
+            setDisplayName(profile.displayName);
+        }
+    }, [profile]);
 
     if (!profile) return null;
 
     const isAdmin = profile.role === "admin" || profile.role === "librarian";
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsSaving(true);
-        setTimeout(() => {
+        try {
+            await updateProfile.mutateAsync({
+                id: profile.id,
+                displayName: displayName
+            });
+            toast.success("Profile updated successfully");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update profile");
+        } finally {
             setIsSaving(false);
-            toast.success("Settings saved successfully");
-        }, 1000);
+        }
     };
 
     return (
@@ -61,7 +79,11 @@ export default function SettingsPage() {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label htmlFor="displayName">Display Name</Label>
-                                        <Input id="displayName" defaultValue={profile.displayName} />
+                                        <Input 
+                                            id="displayName" 
+                                            value={displayName} 
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email Address</Label>
@@ -121,10 +143,14 @@ export default function SettingsPage() {
                                         <Label>Two-Factor Authentication</Label>
                                         <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
                                     </div>
-                                    <Button variant="outline" size="sm">Enable</Button>
+                                    <Button variant="outline" size="sm" onClick={() => toast.info("Two-factor authentication will be available soon.")}>Enable</Button>
                                 </div>
                                 <div className="pt-4 border-t">
-                                    <Button variant="outline" className="gap-2">
+                                    <Button 
+                                        variant="outline" 
+                                        className="gap-2"
+                                        onClick={() => toast.info("Please contact the administrator or use the 'Forgot Password' flow at login to change your password.")}
+                                    >
                                         <Lock className="h-4 w-4" /> Change Password
                                     </Button>
                                 </div>
@@ -145,7 +171,10 @@ export default function SettingsPage() {
                                         <Label>Dark Mode</Label>
                                         <p className="text-sm text-muted-foreground">Toggle between light and dark themes.</p>
                                     </div>
-                                    <Checkbox />
+                                    <Checkbox 
+                                        checked={theme === "dark"} 
+                                        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                                    />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="space-y-0.5">
