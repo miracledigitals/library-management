@@ -23,7 +23,7 @@ import { useTheme } from "next-themes";
 import { useUpdateProfile } from "@/lib/api/profiles";
 
 export default function SettingsPage() {
-    const { profile, refreshProfile } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
     const { setTheme, resolvedTheme } = useTheme();
     const updateProfile = useUpdateProfile();
     const [displayName, setDisplayName] = useState("");
@@ -32,6 +32,8 @@ export default function SettingsPage() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [isRefreshingRole, setIsRefreshingRole] = useState(false);
+    const [lastRoleRefresh, setLastRoleRefresh] = useState<Date | null>(null);
 
     useEffect(() => {
         if (profile?.displayName) {
@@ -57,6 +59,20 @@ export default function SettingsPage() {
             toast.error(message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleRoleRefresh = async () => {
+        setIsRefreshingRole(true);
+        try {
+            await refreshProfile();
+            setLastRoleRefresh(new Date());
+            toast.success("Profile refreshed.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to refresh profile";
+            toast.error(message);
+        } finally {
+            setIsRefreshingRole(false);
         }
     };
 
@@ -112,7 +128,6 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="grid gap-6">
-                        {/* Profile Section */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -139,7 +154,43 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Notifications */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="h-5 w-5" /> Session and Role
+                                </CardTitle>
+                                <CardDescription>Verify the active account and role in use.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label>Auth User ID</Label>
+                                        <Input value={user?.id || ""} readOnly className="font-mono text-xs" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label>Auth Email</Label>
+                                        <Input value={user?.email || ""} readOnly />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label>Profile ID</Label>
+                                        <Input value={profile.id} readOnly className="font-mono text-xs" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label>Profile Role</Label>
+                                        <Input value={profile.role} readOnly />
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="text-xs text-muted-foreground">
+                                        {lastRoleRefresh ? `Last refreshed: ${lastRoleRefresh.toLocaleString()}` : "Not refreshed yet"}
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={handleRoleRefresh} disabled={isRefreshingRole}>
+                                        {isRefreshingRole ? "Refreshing..." : "Refresh Role"}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
