@@ -3,22 +3,8 @@ import {
     useMutation,
     useQueryClient
 } from "@tanstack/react-query";
-import {
-    getDocs,
-    getDoc,
-    doc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    orderBy,
-    limit,
-    Timestamp,
-    where
-} from "firebase/firestore";
-import { booksRef } from "../firestore";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import { Book } from "../../types";
-import { isFirebaseConfigured } from "../firebase";
 
 const MOCK_BOOKS: Book[] = [
     {
@@ -30,14 +16,14 @@ const MOCK_BOOKS: Book[] = [
         totalCopies: 5,
         availableCopies: 5,
         status: "available",
-        addedAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
         location: "Shelf T-1",
         metadata: { language: "en" },
         publisher: "Prentice Hall",
         publishedYear: 2008,
         description: "Even bad code can function. But if code isn't clean, it can bring a development organization to its knees.",
-        coverImage: null
+        coverImage: null,
+        addedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     },
     {
         id: "2",
@@ -48,14 +34,14 @@ const MOCK_BOOKS: Book[] = [
         totalCopies: 3,
         availableCopies: 2,
         status: "available",
-        addedAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
         location: "Shelf F-4",
         metadata: { language: "en" },
         publisher: "George Allen & Unwin",
         publishedYear: 1937,
         description: "Bilbo Baggins is a hobbit who enjoys a comfortable, unambitious life, rarely traveling any farther than his pantry or cellar.",
-        coverImage: null
+        coverImage: null,
+        addedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     }
 ];
 
@@ -63,7 +49,7 @@ export function useBooks(filters?: { genre?: string; status?: string; search?: s
     return useQuery({
         queryKey: ["books", filters],
         queryFn: async () => {
-            if (!isFirebaseConfigured) {
+            if (!isSupabaseConfigured) {
                 let books = [...MOCK_BOOKS];
                 if (filters?.search) {
                     const s = filters.search.toLowerCase();
@@ -72,28 +58,25 @@ export function useBooks(filters?: { genre?: string; status?: string; search?: s
                 return books;
             }
 
-            let q = query(booksRef, orderBy("title", "asc"));
-            const querySnapshot = await getDocs(q);
-            let books = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Book));
-
-            // ... filtering logic ...
+            let query = supabase
+                .from('books')
+                .select('*')
+                .order('title', { ascending: true });
 
             if (filters?.genre && filters.genre !== "All") {
-                books = books.filter(b => b.genre.includes(filters.genre!));
+                query = query.contains('genre', [filters.genre]);
             }
             if (filters?.status && filters.status !== "All") {
-                books = books.filter(b => b.status === filters.status);
+                query = query.eq('status', filters.status);
             }
             if (filters?.search) {
-                const s = filters.search.toLowerCase();
-                books = books.filter(b =>
-                    b.title.toLowerCase().includes(s) ||
-                    b.author.toLowerCase().includes(s) ||
-                    b.isbn.includes(s)
-                );
+                const s = filters.search;
+                query = query.or(`title.ilike.%${s}%,author.ilike.%${s}%,isbn.ilike.%${s}%`);
             }
 
-            return books;
+            const { data, error } = await query;
+            if (error) throw error;
+            return (data || []) as Book[];
         },
     });
 }
@@ -103,12 +86,18 @@ export function useBook(id: string) {
         queryKey: ["books", id],
         queryFn: async () => {
             if (!id) return null;
-            const docRef = doc(booksRef, id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                return { ...docSnap.data(), id: docSnap.id } as Book;
+            if (!isSupabaseConfigured) {
+                return MOCK_BOOKS.find(b => b.id === id) || null;
             }
-            return null;
+
+            const { data, error } = await supabase
+                .from('books')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            return data as Book;
         },
         enabled: !!id,
     });
@@ -118,12 +107,18 @@ export function useCreateBook() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (book: Omit<Book, "id" | "addedAt" | "updatedAt">) => {
-            const now = Timestamp.now();
-            return addDoc(booksRef, {
-                ...book,
-                addedAt: now,
-                updatedAt: now,
-            });
+            const { data, error } = await supabase
+                .from('books')
+                .insert([{
+                    ...book,
+                    added_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["books"] });
@@ -135,11 +130,15 @@ export function useUpdateBook() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...data }: Partial<Book> & { id: string }) => {
-            const docRef = doc(booksRef, id);
-            await updateDoc(docRef, {
-                ...data,
-                updatedAt: Timestamp.now(),
-            });
+            const { error } = await supabase
+                .from('books')
+                .update({
+                    ...data,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', id);
+
+            if (error) throw error;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["books"] });
@@ -152,8 +151,12 @@ export function useDeleteBook() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const docRef = doc(booksRef, id);
-            await deleteDoc(docRef);
+            const { error } = await supabase
+                .from('books')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["books"] });

@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export type MembershipType = 'standard' | 'premium' | 'student';
 export type MembershipStatus = 'active' | 'suspended' | 'expired';
 export type BookStatus = 'available' | 'low_stock' | 'unavailable';
@@ -15,13 +13,13 @@ export interface Book {
     publishedYear: number;
     genre: string[];
     description: string;
-    coverImage: string | null;       // Firebase Storage URL
+    coverImage: string | null;
     totalCopies: number;             // total owned
     availableCopies: number;         // currently on shelf
     location: string;                // physical shelf location
     status: BookStatus;
-    addedAt: Timestamp;
-    updatedAt: Timestamp;
+    addedAt: string;
+    updatedAt: string;
     metadata: {
         pages?: number;
         language: string;
@@ -32,7 +30,7 @@ export interface Book {
 export interface Patron {
     id?: string;
     memberId: string;                // auto-generated (e.g., "MEM-2024-001")
-    email: string;                   // linked to Firebase Auth
+    email: string;
     firstName: string;
     lastName: string;
     phone: string;
@@ -43,10 +41,10 @@ export interface Patron {
     };
     membershipType: MembershipType;
     membershipStatus: MembershipStatus;
-    joinedAt: Timestamp;
-    expiryDate: Timestamp;
-    maxBooksAllowed: number;         // 3 for standard, 5 for premium, 2 for student
-    currentCheckouts: number;        // DENORMALIZED counter
+    joinedAt: string;
+    expiryDate: string;
+    maxBooksAllowed: number;
+    currentCheckouts: number;
     totalCheckoutsHistory: number;
     finesDue: number;                // dollars
     notes: string;
@@ -54,19 +52,18 @@ export interface Patron {
 
 export interface Checkout {
     id: string;
-    bookId: string;                  // reference to books collection
-    patronId: string;                // reference to patrons collection
-    checkoutDate: Timestamp;
-    dueDate: Timestamp;              // 14 days from checkout
-    returnedDate?: Timestamp;
+    bookId: string;
+    patronId: string;
+    checkoutDate: string;
+    dueDate: string;
+    returnedDate?: string;
     status: CheckoutStatus;
-    renewalsCount: number;           // max 2 renewals
+    renewalsCount: number;
     maxRenewals: number;
-    fineAccrued: number;             // $0.50 per day overdue
-    checkedOutBy: string;            // staff user ID
-    returnedTo?: string;             // staff user ID
+    fineAccrued: number;
+    checkedOutBy: string;
+    returnedTo?: string;
     notes: string;
-    // DENORMALIZED fields for display performance:
     bookTitle: string;
     bookIsbn: string;
     patronName: string;
@@ -77,10 +74,10 @@ export interface ActivityLog {
     id: string;
     type: ActivityType;
     description: string;
-    userId: string;                  // who performed the action
-    targetId: string;                // affected book or patron ID
+    userId: string;
+    targetId: string;
     metadata: Record<string, any>;
-    timestamp: Timestamp;
+    timestamp: string;
 }
 
 export interface BorrowRequest {
@@ -89,13 +86,13 @@ export interface BorrowRequest {
     patronId: string;
     requesterName: string;
     bookTitle: string;
-    requestDate: Timestamp;
+    requestDate: string;
     status: 'pending' | 'approved' | 'denied';
     adminNotes?: string;
 }
 
 export interface UserProfile {
-    uid: string;
+    id: string;
     email: string;
     role: 'admin' | 'librarian' | 'patron';
     displayName?: string;

@@ -117,7 +117,7 @@ export default function PatronDetailPage() {
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    <span>Joined {format(patron.joinedAt.toDate(), "MMM yyyy")}</span>
+                                    <span>Joined {format(new Date(patron.joinedAt), "MMM yyyy")}</span>
                                 </div>
                             </div>
 

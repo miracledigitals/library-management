@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
     const { profile, user } = useAuth();
-    const { data: requests, isLoading: isLoadingRequests } = usePatronRequests(user?.uid || "");
+    const { data: requests, isLoading: isLoadingRequests } = usePatronRequests(user?.id || "");
 
     if (!profile) return null;
 
@@ -61,7 +61,7 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-3 text-sm">
                                     <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                                     <span className="font-medium">Member ID:</span>
-                                    <span className="font-mono text-xs ml-auto">MEM-{profile.uid.slice(0, 8).toUpperCase()}</span>
+                                    <span className="font-mono text-xs ml-auto">MEM-{profile.id.slice(0, 8).toUpperCase()}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground italic">
                                     <Info className="h-4 w-4" />
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                                                     <p className="text-sm font-medium">{request.bookTitle}</p>
                                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                         <Clock className="h-3 w-3" />
-                                                        {format(request.requestDate.toDate(), "MMM dd, yyyy")}
+                                                        {format(new Date(request.requestDate), "MMM dd, yyyy")}
                                                     </div>
                                                 </div>
                                                 <Badge variant={

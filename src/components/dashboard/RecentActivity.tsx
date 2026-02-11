@@ -59,7 +59,7 @@ export function RecentActivity({ userId }: { userId?: string }) {
                             {log.description}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                         </p>
                     </div>
                 </div>

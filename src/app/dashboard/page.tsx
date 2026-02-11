@@ -23,7 +23,7 @@ export default function DashboardPage() {
     const { profile, user } = useAuth();
     const { data: books, isLoading: booksLoading } = useBooks();
     const { data: patrons, isLoading: patronsLoading } = usePatrons();
-    const { data: patronData } = usePatron(profile?.uid || "");
+    const { data: patronData } = usePatron(profile?.id || "");
 
     // For patrons, we might want to fetch their specific checkouts too
     // But for now we can derive some info from the profile or mock data
@@ -168,7 +168,7 @@ export default function DashboardPage() {
                             <CardTitle>Recent Activity</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <RecentActivity userId={isPatron ? user?.uid : undefined} />
+                            <RecentActivity userId={isPatron ? user?.id : undefined} />
                         </CardContent>
                     </Card>
                 </div>

@@ -53,7 +53,7 @@ function LoanCard({ loan }: { loan: Checkout }) {
     const { data: book } = useBook(loan.bookId);
     const renewMutation = useRenewLoan();
 
-    const dueDate = loan.dueDate.toDate();
+    const dueDate = new Date(loan.dueDate);
     const isOverdue = isPast(dueDate) && !isToday(dueDate);
     const isDueSoon = !isOverdue && isPast(addDays(dueDate, -3));
 

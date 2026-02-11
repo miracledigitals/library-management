@@ -32,7 +32,6 @@ import {
     Shield
 } from "lucide-react";
 import { MembershipType, MembershipStatus } from "@/types";
-import { Timestamp } from "firebase/firestore";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -82,7 +81,7 @@ export default function ManualRegistrationPage() {
                 currentCheckouts: 0,
                 totalCheckoutsHistory: 0,
                 finesDue: 0,
-                expiryDate: Timestamp.fromDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1))),
+                expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
                 memberId: newMemberId,
             } as any);
             setMemberId(newMemberId);

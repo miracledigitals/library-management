@@ -74,7 +74,7 @@ export default function CheckoutPage() {
             await performCheckout(
                 selectedPatron.id as string,
                 cart.map(b => b.id as string),
-                user.uid as string,
+                user.id as string,
                 dueDate
             );
             toast.success("Checkout completed successfully!");

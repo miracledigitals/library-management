@@ -3,21 +3,8 @@ import {
     useMutation,
     useQueryClient
 } from "@tanstack/react-query";
-import {
-    getDocs,
-    getDoc,
-    doc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    orderBy,
-    Timestamp,
-    where
-} from "firebase/firestore";
-import { patronsRef } from "../firestore";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import { Patron } from "../../types";
-import { isFirebaseConfigured } from "../firebase";
 
 const MOCK_PATRONS: Patron[] = [
     {
@@ -28,8 +15,8 @@ const MOCK_PATRONS: Patron[] = [
         email: "john.doe@example.com",
         phone: "555-0101",
         address: { street: "123 Main St", city: "Library Village", zipCode: "12345" },
-        joinedAt: Timestamp.now(),
-        expiryDate: Timestamp.now(),
+        joinedAt: new Date().toISOString(),
+        expiryDate: new Date().toISOString(),
         membershipStatus: "active",
         membershipType: "standard",
         finesDue: 0,
@@ -37,32 +24,50 @@ const MOCK_PATRONS: Patron[] = [
         maxBooksAllowed: 5,
         totalCheckoutsHistory: 12,
         notes: ""
-    },
-    {
-        id: "p2",
-        memberId: "LIB-2024-002",
-        firstName: "Jane",
-        lastName: "Smith",
-        email: "jane.smith@example.com",
-        phone: "555-0102",
-        address: { street: "456 Oak Ave", city: "Booktown", zipCode: "67890" },
-        joinedAt: Timestamp.now(),
-        expiryDate: Timestamp.now(),
-        membershipStatus: "active",
-        membershipType: "premium",
-        finesDue: 5.50,
-        currentCheckouts: 3,
-        maxBooksAllowed: 10,
-        totalCheckoutsHistory: 45,
-        notes: ""
     }
 ];
+
+function mapPatronFromDB(data: any): Patron {
+    return {
+        id: data.id,
+        memberId: data.member_id,
+        email: data.email,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        phone: data.phone,
+        address: data.address,
+        joinedAt: data.joined_at,
+        expiryDate: data.expiry_date,
+        membershipStatus: data.membership_status,
+        membershipType: data.membership_type,
+        finesDue: parseFloat(data.fines_due),
+        currentCheckouts: data.current_checkouts,
+        maxBooksAllowed: data.max_books_allowed,
+        totalCheckoutsHistory: data.total_checkouts_history,
+        notes: data.notes
+    };
+}
+
+function mapPatronToDB(patron: Partial<Patron>) {
+    const data: any = {};
+    if (patron.memberId) data.member_id = patron.memberId;
+    if (patron.email) data.email = patron.email;
+    if (patron.firstName) data.first_name = patron.firstName;
+    if (patron.lastName) data.last_name = patron.lastName;
+    if (patron.phone) data.phone = patron.phone;
+    if (patron.address) data.address = patron.address;
+    if (patron.membershipStatus) data.membership_status = patron.membershipStatus;
+    if (patron.membershipType) data.membership_type = patron.membershipType;
+    if (patron.notes !== undefined) data.notes = patron.notes;
+    // ... add more as needed
+    return data;
+}
 
 export function usePatrons(filters?: { search?: string; type?: string; status?: string }) {
     return useQuery({
         queryKey: ["patrons", filters],
         queryFn: async () => {
-            if (!isFirebaseConfigured) {
+            if (!isSupabaseConfigured) {
                 let patrons = [...MOCK_PATRONS];
                 if (filters?.search) {
                     const s = filters.search.toLowerCase();
@@ -74,29 +79,25 @@ export function usePatrons(filters?: { search?: string; type?: string; status?: 
                 return patrons;
             }
 
-            let q = query(patronsRef, orderBy("lastName", "asc"));
-            const querySnapshot = await getDocs(q);
-            let patrons = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Patron));
-
-            // ... filtering logic ...
+            let query = supabase
+                .from('patrons')
+                .select('*')
+                .order('last_name', { ascending: true });
 
             if (filters?.type && filters.type !== "All") {
-                patrons = patrons.filter(p => p.membershipType === filters.type);
+                query = query.eq('membership_type', filters.type);
             }
             if (filters?.status && filters.status !== "All") {
-                patrons = patrons.filter(p => p.membershipStatus === filters.status);
+                query = query.eq('membership_status', filters.status);
             }
             if (filters?.search) {
-                const s = filters.search.toLowerCase();
-                patrons = patrons.filter(p =>
-                    p.firstName.toLowerCase().includes(s) ||
-                    p.lastName.toLowerCase().includes(s) ||
-                    p.email.toLowerCase().includes(s) ||
-                    p.memberId.toLowerCase().includes(s)
-                );
+                const s = filters.search;
+                query = query.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,member_id.ilike.%${s}%`);
             }
 
-            return patrons;
+            const { data, error } = await query;
+            if (error) throw error;
+            return (data || []).map(mapPatronFromDB);
         },
     });
 }
@@ -106,12 +107,18 @@ export function usePatron(id: string) {
         queryKey: ["patrons", id],
         queryFn: async () => {
             if (!id) return null;
-            const docRef = doc(patronsRef, id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                return { ...docSnap.data(), id: docSnap.id } as Patron;
+            if (!isSupabaseConfigured) {
+                return MOCK_PATRONS.find(p => p.id === id) || null;
             }
-            return null;
+
+            const { data, error } = await supabase
+                .from('patrons')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            return mapPatronFromDB(data);
         },
         enabled: !!id,
     });
@@ -121,11 +128,22 @@ export function useCreatePatron() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (patron: Omit<Patron, "id" | "joinedAt">) => {
-            const now = Timestamp.now();
-            return addDoc(patronsRef, {
-                ...patron,
-                joinedAt: now,
-            });
+            const dbData = {
+                ...mapPatronToDB(patron as any),
+                joined_at: new Date().toISOString(),
+                current_checkouts: 0,
+                total_checkouts_history: 0,
+                fines_due: 0
+            };
+
+            const { data, error } = await supabase
+                .from('patrons')
+                .insert([dbData])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return mapPatronFromDB(data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["patrons"] });
@@ -137,8 +155,12 @@ export function useUpdatePatron() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...data }: Partial<Patron> & { id: string }) => {
-            const docRef = doc(patronsRef, id);
-            await updateDoc(docRef, data);
+            const { error } = await supabase
+                .from('patrons')
+                .update(mapPatronToDB(data))
+                .eq('id', id);
+
+            if (error) throw error;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["patrons"] });

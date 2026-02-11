@@ -70,7 +70,7 @@ export default function ReturnsPage() {
 
         setIsProcessing(true);
         try {
-            const result = await processReturn(checkout.id, user.uid || "", condition, selectedDamages);
+            const result = await processReturn(checkout.id, user.id || "", condition, selectedDamages);
             toast.success(`Return processed. Fine: $${result.fineCharged.toFixed(2)}`);
             setCheckout(null);
             setSearch("");
@@ -83,7 +83,7 @@ export default function ReturnsPage() {
         }
     };
 
-    const overdueDays = checkout ? differenceInDays(new Date(), checkout.dueDate.toDate()) : 0;
+    const overdueDays = checkout ? differenceInDays(new Date(), new Date(checkout.dueDate)) : 0;
     const lateFee = Math.max(0, Math.min(overdueDays * 0.5, 50));
     const damageFee = condition === "lost"
         ? DAMAGE_FINES.lost
@@ -155,14 +155,14 @@ export default function ReturnsPage() {
                                         <span className="text-xs text-muted-foreground uppercase font-semibold">Checked Out</span>
                                         <div className="flex items-center gap-2 text-sm">
                                             <Calendar className="h-3 w-3 text-muted-foreground" />
-                                            {format(checkout.checkoutDate.toDate(), "MMM dd, yyyy")}
+                                            {format(new Date(checkout.checkoutDate), "MMM dd, yyyy")}
                                         </div>
                                     </div>
                                     <div className="space-y-1">
                                         <span className="text-xs text-muted-foreground uppercase font-semibold">Due Date</span>
                                         <div className={`flex items-center gap-2 text-sm font-medium ${overdueDays > 0 ? 'text-rose-600' : ''}`}>
                                             <Calendar className="h-3 w-3" />
-                                            {format(checkout.dueDate.toDate(), "MMM dd, yyyy")}
+                                            {format(new Date(checkout.dueDate), "MMM dd, yyyy")}
                                             {overdueDays > 0 && <AlertCircle className="h-4 w-4" />}
                                         </div>
                                     </div>

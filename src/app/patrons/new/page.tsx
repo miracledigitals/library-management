@@ -18,7 +18,6 @@ import {
 import { toast } from "sonner";
 import { Loader2, Save, X, UserPlus } from "lucide-react";
 import { MembershipType, MembershipStatus } from "@/types";
-import { Timestamp } from "firebase/firestore";
 
 export default function NewPatronPage() {
     const router = useRouter();
@@ -41,7 +40,7 @@ export default function NewPatronPage() {
         totalCheckoutsHistory: 0,
         finesDue: 0,
         notes: "",
-        expiryDate: Timestamp.fromDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1))), // 1 year from now
+        expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(), // 1 year from now
     });
 
     const handleTypeChange = (value: MembershipType) => {

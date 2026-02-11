@@ -37,8 +37,6 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules",
-    "src/functions",
-    "src/lib/seed.ts"
+    "node_modules"
   ]
 }

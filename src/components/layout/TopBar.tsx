@@ -38,7 +38,7 @@ export function TopBar() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent rounded-full">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={user?.photoURL || ""} />
+                                <AvatarImage src={(user as any)?.user_metadata?.avatar_url || ""} />
                                 <AvatarFallback className="bg-primary text-primary-foreground">
                                     {user?.email?.substring(0, 2).toUpperCase() || "LMS"}
                                 </AvatarFallback>

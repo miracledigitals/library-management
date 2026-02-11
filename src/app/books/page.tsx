@@ -45,7 +45,7 @@ export default function BooksPage() {
 
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
-    const { data: myRequests } = usePatronRequests(user?.uid || "");
+    const { data: myRequests } = usePatronRequests(user?.id || "");
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
 
@@ -363,7 +363,7 @@ export default function BooksPage() {
                     book={selectedBookForModal}
                     open={isModalOpen}
                     onOpenChange={setIsModalOpen}
-                    patronId={user?.uid || ""}
+                    patronId={user?.id || ""}
                     patronName={profile?.displayName || profile?.email || "Patron"}
                 />
             )}

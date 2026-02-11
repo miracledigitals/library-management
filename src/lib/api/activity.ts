@@ -1,27 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-    getDocs,
-    query,
-    orderBy,
-    limit
-} from "firebase/firestore";
-import { activityLogsRef } from "../firestore";
+import { supabase, isSupabaseConfigured } from "../supabase";
 import { ActivityLog } from "../../types";
-
-import { where } from "firebase/firestore";
 
 export function useRecentActivity(count: number = 10, userId?: string) {
     return useQuery({
         queryKey: ["activity_logs", count, userId],
         queryFn: async () => {
-            let q = query(activityLogsRef, orderBy("timestamp", "desc"), limit(count));
+            if (!isSupabaseConfigured) return [];
+
+            let query = supabase
+                .from('activity_logs')
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(count);
 
             if (userId) {
-                q = query(activityLogsRef, where("userId", "==", userId), orderBy("timestamp", "desc"), limit(count));
+                query = query.eq('user_id', userId);
             }
 
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ActivityLog));
+            const { data, error } = await query;
+            if (error) throw error;
+
+            return (data || []).map(log => ({
+                id: log.id,
+                type: log.type,
+                description: log.description,
+                userId: log.user_id,
+                targetId: log.target_id,
+                metadata: log.metadata,
+                timestamp: log.timestamp,
+            })) as ActivityLog[];
         },
     });
 }

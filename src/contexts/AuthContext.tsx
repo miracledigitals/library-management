@@ -1,18 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-    onAuthStateChanged,
-    User,
-    signInWithEmailAndPassword,
-    signOut,
-    IdTokenResult,
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup
-} from "firebase/auth";
-import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 import { UserProfile } from "@/types";
 
 interface AuthContextType {
@@ -35,15 +25,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!isFirebaseConfigured) {
-            console.warn("Firebase not configured. Using Demo Mode.");
+        if (!isSupabaseConfigured) {
+            console.warn("Supabase not configured. Using Demo Mode.");
             setUser({
-                uid: "demo-user",
+                id: "demo-user",
                 email: "librarian@demo.com",
-                displayName: "Demo Librarian",
             });
             setProfile({
-                uid: "demo-user",
+                id: "demo-user",
                 email: "librarian@demo.com",
                 displayName: "Demo Librarian",
                 role: "librarian",
@@ -52,21 +41,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setUser(user);
-            if (user) {
-                // Fetch user profile from Firestore or custom claims
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
+        const getInitialSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            handleUserChange(session?.user ?? null);
+        };
 
-                if (docSnap.exists()) {
-                    setProfile(docSnap.data() as UserProfile);
+        const handleUserChange = async (supabaseUser: User | null) => {
+            setUser(supabaseUser);
+            if (supabaseUser) {
+                // Fetch user profile from PostgreSQL
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', supabaseUser.id)
+                    .single();
+
+                if (data && !error) {
+                    setProfile({
+                        id: data.id,
+                        email: data.email,
+                        displayName: data.display_name,
+                        role: data.role,
+                        currentCheckouts: data.current_checkouts,
+                        finesDue: parseFloat(data.fines_due),
+                    });
                 } else {
                     // Fallback or default role
                     setProfile({
-                        uid: user.uid,
-                        email: user.email || "",
-                        displayName: user.displayName || "",
+                        id: supabaseUser.id,
+                        email: supabaseUser.email || "",
+                        displayName: supabaseUser.user_metadata?.full_name || "",
                         role: "patron", // Default role
                     });
                 }
@@ -74,13 +78,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setProfile(null);
             }
             setLoading(false);
+        };
+
+        getInitialSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            handleUserChange(session?.user ?? null);
         });
 
-        return () => unsubscribe();
+        return () => subscription.unsubscribe();
     }, []);
 
     const login = async (email: string, password: string) => {
-        if (!isFirebaseConfigured) {
+        if (!isSupabaseConfigured) {
             console.log("Mock login triggered for:", email);
             const role = email.includes("admin") ? "admin" :
                 email.includes("patron") ? "patron" : "librarian";
@@ -88,30 +98,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const name = role === "admin" ? "Demo Admin" :
                 role === "patron" ? "Demo Patron" : "Demo Librarian";
 
-            setUser({ uid: `demo-${role}`, email, displayName: name });
-            setProfile({ uid: `demo-${role}`, email, displayName: name, role: role as any });
+            setUser({ id: `demo-${role}`, email });
+            setProfile({ id: `demo-${role}`, email, displayName: name, role: role as any });
             return;
         }
-        return signInWithEmailAndPassword(auth, email, password).then(() => { });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
     };
 
     const loginWithGoogle = async () => {
-        if (!isFirebaseConfigured) {
+        if (!isSupabaseConfigured) {
             console.log("Mock google login triggered - defaulting to Librarian");
             login("librarian@demo.com", "password");
             return;
         }
-        const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider).then(() => { });
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+        });
+        if (error) throw error;
     };
 
     const logout = async () => {
-        if (!isFirebaseConfigured) {
+        if (!isSupabaseConfigured) {
             setUser(null);
             setProfile(null);
             return;
         }
-        return signOut(auth);
+        await supabase.auth.signOut();
     };
 
     const value = {

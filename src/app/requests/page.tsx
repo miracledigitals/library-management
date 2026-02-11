@@ -46,20 +46,33 @@ export default function RequestsPage() {
         setIsDialogOpen(true);
     };
 
+    const handleStatusUpdate = async (requestId: string, status: 'approved' | 'denied', adminNotes?: string) => {
+        try {
+            await processRequest.mutateAsync({
+                requestId,
+                status,
+                adminNotes,
+                staffUserId: user?.id || ""
+            });
+            toast.success(`Request ${status} successfully`);
+            return true; // Indicate success
+        } catch (error: any) {
+            toast.error(error.message || `Failed to ${status} request`);
+            return false; // Indicate failure
+        }
+    };
+
     const confirmAction = async () => {
         if (!selectedRequest || !user) return;
 
-        try {
-            await processRequest.mutateAsync({
-                requestId: selectedRequest.id as string,
-                status: actionType,
-                adminNotes: notes,
-                staffUserId: user.uid || ""
-            });
-            toast.success(`Request ${actionType === "approved" ? "approved" : "denied"} successfully`);
+        const success = await handleStatusUpdate(
+            selectedRequest.id as string,
+            actionType,
+            notes
+        );
+
+        if (success) {
             setIsDialogOpen(false);
-        } catch (error: any) {
-            toast.error(error.message || `Failed to process request`);
         }
     };
 
@@ -110,7 +123,7 @@ export default function RequestsPage() {
                                         requests?.map((request) => (
                                             <TableRow key={request.id}>
                                                 <TableCell className="text-sm">
-                                                    {format(request.requestDate.toDate(), "MMM dd, yyyy")}
+                                                    {format(new Date(request.requestDate), "MMM dd, yyyy")}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-medium">{request.requesterName}</div>
