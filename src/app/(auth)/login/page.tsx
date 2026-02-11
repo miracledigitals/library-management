@@ -49,8 +49,6 @@ export default function LoginPage() {
     const handleGoogleLogin = async () => {
         try {
             await loginWithGoogle();
-            toast.success("Logged in with Google");
-            // Note: router.push happens in AuthContext onAuthStateChange
         } catch (error: any) {
             toast.error(error.message || "Failed to login with Google");
         }

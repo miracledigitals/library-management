@@ -27,6 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
+
         if (!isSupabaseConfigured) {
             console.warn("Supabase not configured. Using Demo Mode.");
             setUser({
@@ -43,65 +45,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const getInitialSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            handleUserChange(session?.user ?? null);
-        };
-
         const handleUserChange = async (supabaseUser: User | null) => {
+            if (!isMounted) return;
+
             if (supabaseUser) {
-                // Fetch user profile from PostgreSQL
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', supabaseUser.id)
-                    .single();
+                try {
+                    // Fetch user profile from PostgreSQL
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', supabaseUser.id)
+                        .single();
 
-                if (data && !error) {
-                    setUser(supabaseUser);
-                    setProfile({
-                        id: data.id,
-                        email: data.email,
-                        displayName: data.display_name,
-                        role: data.role,
-                        currentCheckouts: data.current_checkouts,
-                        finesDue: parseFloat(data.fines_due),
-                    });
-                } else {
-                    // If no profile exists, this is a new registration or an unregistered Google login
-                    // If it's a Google login and we want to restrict to registered emails only:
-                    if (supabaseUser.app_metadata?.provider === 'google') {
-                        // Check if email exists in profiles (registered via other means)
-                        const { data: emailExists } = await supabase
-                            .from('profiles')
-                            .select('id')
-                            .eq('email', supabaseUser.email)
-                            .maybeSingle();
+                    if (!isMounted) return;
 
-                        if (!emailExists) {
-                            await supabase.auth.signOut();
-                            toast.error("This Google account is not registered. Please sign up first.");
-                            setProfile(null);
-                            setUser(null);
-                            setLoading(false);
-                            return;
+                    if (data && !error) {
+                        setUser(supabaseUser);
+                        setProfile({
+                            id: data.id,
+                            email: data.email,
+                            displayName: data.display_name,
+                            role: data.role,
+                            currentCheckouts: data.current_checkouts,
+                            finesDue: parseFloat(data.fines_due),
+                        });
+                    } else {
+                        if (supabaseUser.app_metadata?.provider === 'google') {
+                            const { data: emailExists } = await supabase
+                                .from('profiles')
+                                .select('id')
+                                .eq('email', supabaseUser.email)
+                                .maybeSingle();
+
+                            if (!isMounted) return;
+
+                            if (!emailExists) {
+                                await supabase.auth.signOut();
+                                toast.error("This Google account is not registered. Please sign up first.");
+                                setProfile(null);
+                                setUser(null);
+                                setLoading(false);
+                                return;
+                            }
                         }
-                    }
 
-                    // Fallback or default role for new sign-ups (handled by DB trigger usually)
-                    setUser(supabaseUser);
-                    setProfile({
-                        id: supabaseUser.id,
-                        email: supabaseUser.email || "",
-                        displayName: supabaseUser.user_metadata?.full_name || "",
-                        role: "patron", // Default role
-                    });
+                        setUser(supabaseUser);
+                        setProfile({
+                            id: supabaseUser.id,
+                            email: supabaseUser.email || "",
+                            displayName: supabaseUser.user_metadata?.full_name || "",
+                            role: "patron",
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error in handleUserChange:", err);
                 }
             } else {
                 setUser(null);
                 setProfile(null);
             }
-            setLoading(false);
+            
+            if (isMounted) {
+                setLoading(false);
+            }
+        };
+
+        const getInitialSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (isMounted) {
+                    handleUserChange(session?.user ?? null);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    console.error("Error getting initial session:", err);
+                    setLoading(false);
+                }
+            }
         };
 
         getInitialSession();
@@ -110,7 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             handleUserChange(session?.user ?? null);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (email: string, password: string) => {
