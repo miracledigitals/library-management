@@ -68,6 +68,24 @@ export function usePatronCheckouts(patronId: string | undefined) {
     });
 }
 
+export function useActiveCheckouts() {
+    return useQuery({
+        queryKey: ["checkouts", "active"],
+        queryFn: async () => {
+            if (!isSupabaseConfigured) return [];
+
+            const { data, error } = await supabase
+                .from('checkouts')
+                .select('*')
+                .in('status', ['active', 'overdue'])
+                .order('due_date', { ascending: true });
+
+            if (error) throw error;
+            return (data || []).map(mapCheckoutFromDB);
+        },
+    });
+}
+
 export function useRenewLoan() {
     const queryClient = useQueryClient();
     return useMutation({

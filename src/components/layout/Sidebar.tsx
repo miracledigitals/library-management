@@ -6,26 +6,22 @@ import { cn } from "@/lib/utils";
 import {
     LayoutDashboard,
     Book,
-    Users,
     ArrowRightLeft,
     RotateCcw,
     BarChart3,
     Settings,
     FileText,
-    UserPlus,
-    Zap
+    UserPlus
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "librarian", "patron"] },
     { name: "Books", href: "/books", icon: Book, roles: ["admin", "librarian", "patron"] },
-    { name: "Members", href: "/patrons", icon: Users, roles: ["admin", "librarian"] },
     { name: "Checkout", href: "/checkout", icon: ArrowRightLeft, roles: ["admin", "librarian"] },
-    { name: "Express", href: "/checkout/express", icon: Zap, roles: ["admin", "librarian"] },
     { name: "Returns", href: "/returns", icon: RotateCcw, roles: ["admin", "librarian"] },
     { name: "Requests", href: "/requests", icon: FileText, roles: ["admin", "librarian"] },
-    { name: "Onboarding", href: "/patrons/manual", icon: UserPlus, roles: ["admin", "librarian"] },
+    { name: "Admin Onboarding", href: "/patrons/manual", icon: UserPlus, roles: ["admin"] },
     { name: "Reports", href: "/reports", icon: BarChart3, roles: ["admin"] },
 ];
 

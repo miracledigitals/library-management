@@ -13,7 +13,8 @@ import {
     UserPlus
 } from "lucide-react";
 import { useBooks } from "@/lib/api/books";
-import { usePatrons, usePatron } from "@/lib/api/patrons";
+import { usePatron } from "@/lib/api/patrons";
+import { useActiveCheckouts } from "@/lib/api/checkouts";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
@@ -23,8 +24,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function DashboardPage() {
     const { profile, user } = useAuth();
     const { data: books, isLoading: booksLoading } = useBooks();
-    const { data: patrons, isLoading: patronsLoading } = usePatrons();
     const { data: patronData } = usePatron(profile?.id || "");
+    const { data: activeCheckouts, isLoading: checkoutsLoading } = useActiveCheckouts();
 
     // For patrons, we might want to fetch their specific checkouts too
     // But for now we can derive some info from the profile or mock data
@@ -58,20 +59,14 @@ export default function DashboardPage() {
             color: "text-blue-600"
         },
         {
-            title: "Active Members",
-            value: patronsLoading ? "..." : patrons?.length || 0,
-            icon: Users,
-            color: "text-emerald-600"
-        },
-        {
             title: "Checked Out",
-            value: booksLoading ? "..." : books?.filter(b => b.availableCopies < b.totalCopies).length || 0,
+            value: checkoutsLoading ? "..." : activeCheckouts?.length || 0,
             icon: ArrowRightLeft,
             color: "text-indigo-600"
         },
         {
             title: "Overdue Items",
-            value: "0",
+            value: checkoutsLoading ? "..." : activeCheckouts?.filter(c => c.status === "overdue").length || 0,
             icon: AlertTriangle,
             color: "text-rose-600"
         },
@@ -158,11 +153,13 @@ export default function DashboardPage() {
                                             </Button>
                                         </Link>
                                     )}
-                                    <Link href="/patrons/new" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
-                                            <UserPlus className="h-5 w-5" /> New Member
-                                        </Button>
-                                    </Link>
+                                    {profile?.role === "admin" && (
+                                        <Link href="/patrons/manual" className="w-full">
+                                            <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                                <UserPlus className="h-5 w-5" /> Admin Onboarding
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </>
                             )}
                         </CardContent>

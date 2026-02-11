@@ -6,13 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Book, Chrome } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,7 +14,6 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
-    const [role, setRole] = useState<"admin" | "patron">("patron");
     const [loading, setLoading] = useState(false);
     const { user, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
@@ -40,7 +32,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             if (isRegistering) {
-                await register(email, password, fullName, role);
+                await register(email, password, fullName, "patron");
                 toast.success("Account created! You can now log in.");
                 setIsRegistering(false);
             } else {
@@ -129,37 +121,18 @@ export default function LoginPage() {
                     <div className="grid gap-6">
                         <form onSubmit={handleAuth} className="space-y-4">
                             {isRegistering && (
-                                <>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fullName">Full Name</Label>
-                                        <Input
-                                            id="fullName"
-                                            type="text"
-                                            placeholder="John Doe"
-                                            required
-                                            value={fullName}
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            className="h-11"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="role">Role</Label>
-                                        <Select
-                                            value={role}
-                                            onValueChange={(value: string) =>
-                                                setRole(value === "admin" ? "admin" : "patron")
-                                            }
-                                        >
-                                            <SelectTrigger id="role" className="h-11 w-full">
-                                                <SelectValue placeholder="Select your role" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="patron">Library User (Patron)</SelectItem>
-                                                <SelectItem value="admin">Administrator</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </>
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName">Full Name</Label>
+                                    <Input
+                                        id="fullName"
+                                        type="text"
+                                        placeholder="John Doe"
+                                        required
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        className="h-11"
+                                    />
+                                </div>
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>

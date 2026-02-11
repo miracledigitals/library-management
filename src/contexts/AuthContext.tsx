@@ -259,6 +259,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        if (role === "admin" && profileRef.current?.role !== "admin") {
+            throw new Error("Only admins can create new admin accounts.");
+        }
+
         const { error } = await supabase.auth.signUp({
             email,
             password,

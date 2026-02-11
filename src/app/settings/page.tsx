@@ -3,6 +3,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +28,10 @@ export default function SettingsPage() {
     const updateProfile = useUpdateProfile();
     const [displayName, setDisplayName] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
     useEffect(() => {
         if (profile?.displayName) {
@@ -52,6 +57,49 @@ export default function SettingsPage() {
             toast.error(message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!isSupabaseConfigured) {
+            toast.info("Password changes are unavailable in demo mode.");
+            return;
+        }
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            toast.error("All password fields are required.");
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            toast.error("New passwords do not match.");
+            return;
+        }
+        if (newPassword.length < 8) {
+            toast.error("Password must be at least 8 characters.");
+            return;
+        }
+
+        setIsUpdatingPassword(true);
+        try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: currentPassword,
+            });
+            if (signInError) {
+                throw new Error("Current password is incorrect.");
+            }
+
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+
+            toast.success("Password updated successfully.");
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to update password";
+            toast.error(message);
+        } finally {
+            setIsUpdatingPassword(false);
         }
     };
 
@@ -146,13 +194,43 @@ export default function SettingsPage() {
                                     <Button variant="outline" size="sm" onClick={() => toast.info("Two-factor authentication will be available soon.")}>Enable</Button>
                                 </div>
                                 <div className="pt-4 border-t">
-                                    <Button 
-                                        variant="outline" 
-                                        className="gap-2"
-                                        onClick={() => toast.info("Please contact the administrator or use the 'Forgot Password' flow at login to change your password.")}
-                                    >
-                                        <Lock className="h-4 w-4" /> Change Password
-                                    </Button>
+                                    <div className="space-y-3 max-w-md">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="currentPassword">Current Password</Label>
+                                            <Input
+                                                id="currentPassword"
+                                                type="password"
+                                                value={currentPassword}
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newPassword">New Password</Label>
+                                            <Input
+                                                id="newPassword"
+                                                type="password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                                            <Input
+                                                id="confirmNewPassword"
+                                                type="password"
+                                                value={confirmNewPassword}
+                                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="gap-2"
+                                            onClick={handleChangePassword}
+                                            disabled={isUpdatingPassword}
+                                        >
+                                            <Lock className="h-4 w-4" /> {isUpdatingPassword ? "Updating..." : "Change Password"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
