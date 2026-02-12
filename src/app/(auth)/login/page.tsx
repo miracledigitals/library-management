@@ -38,7 +38,8 @@ export default function LoginPage() {
             } else {
                 await login(email, password);
                 toast.success("Logged in successfully");
-                // Redirect will be handled by useEffect to avoid double redirect issues
+                // Explicitly push to dashboard to ensure transition on mobile
+                router.push("/dashboard");
             }
         } catch (error: unknown) {
             const message =

@@ -30,11 +30,11 @@ export function TopBar() {
             : "";
 
     return (
-        <header className="flex items-center gap-3 border-b bg-background px-4 py-3 md:h-16 md:px-6 md:py-0">
+        <header className="flex items-center gap-3 border-b bg-background px-4 py-3 lg:h-16 lg:px-6 lg:py-0">
             <div className="flex items-center gap-2">
                 <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="md:hidden">
+                        <Button variant="ghost" size="icon" className="lg:hidden">
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
@@ -44,16 +44,16 @@ export function TopBar() {
                 </Sheet>
             </div>
 
-            <div className="relative flex-1 md:flex-none md:w-96">
+            <div className="relative flex-1 lg:flex-none lg:w-96">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
                     placeholder="Global search (Ctrl+K)..."
-                    className="w-full bg-muted pl-8 md:w-[300px] lg:w-[400px]"
+                    className="w-full bg-muted pl-8 lg:w-[300px] xl:w-[400px]"
                 />
             </div>
 
-            <div className="flex items-center gap-3 md:gap-4">
+            <div className="flex items-center gap-3 lg:gap-4">
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     <span className="absolute right-2 top-2 flex h-2 w-2 rounded-full bg-destructive" />

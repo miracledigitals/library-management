@@ -109,14 +109,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        // Safety timeout to prevent stuck loading
-        const safetyTimeout = setTimeout(() => {
-            if (loading && isMounted.current) {
-                console.warn("Auth initialization timed out after 10s. Forcing loading to false.");
-                setLoading(false);
-            }
-        }, 10000);
-
         const handleUserChange = async (supabaseUser: User | null) => {
             if (!isMounted.current) return;
 
@@ -185,6 +177,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
             }
         };
+
+        // Safety timeout to prevent stuck loading
+        const safetyTimeout = setTimeout(() => {
+            if (loading && isMounted.current) {
+                console.warn("Auth initialization timed out after 10s. Forcing loading to false.");
+                setLoading(false);
+            }
+        }, 10000);
 
         const getInitialSession = async () => {
             try {

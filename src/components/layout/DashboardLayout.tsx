@@ -27,11 +27,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (!user) return null;
 
     return (
-        <div className="flex min-h-screen bg-background md:h-screen">
-            <Sidebar className="hidden md:flex" />
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-[100dvh] bg-background lg:h-screen overflow-hidden">
+            <Sidebar className="hidden lg:flex" />
+            <div className="flex min-w-0 flex-1 flex-col h-full">
                 <TopBar />
-                <main className="flex-1 overflow-y-auto p-4 md:p-6">
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
                     {children}
                 </main>
             </div>
