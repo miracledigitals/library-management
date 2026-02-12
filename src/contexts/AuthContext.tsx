@@ -109,6 +109,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        // Safety timeout to prevent stuck loading
+        const safetyTimeout = setTimeout(() => {
+            if (loading && isMounted.current) {
+                console.warn("Auth initialization timed out after 10s. Forcing loading to false.");
+                setLoading(false);
+            }
+        }, 10000);
+
         const handleUserChange = async (supabaseUser: User | null) => {
             if (!isMounted.current) return;
 
@@ -133,7 +141,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             fetchingProfileFor.current = supabaseUser.id;
             lastUserId.current = supabaseUser.id;
-            setLoading(true);
+            
+            // Only set loading if we don't already have a profile for this user
+            if (!profileRef.current || profileRef.current.id !== supabaseUser.id) {
+                setLoading(true);
+            }
 
             try {
                 // Fetch user profile from PostgreSQL
@@ -197,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         return () => {
+            clearTimeout(safetyTimeout);
             subscription.unsubscribe();
         };
     }, []);
