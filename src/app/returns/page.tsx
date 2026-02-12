@@ -21,7 +21,7 @@ export default function ReturnsPage() {
     return (
         <DashboardLayout>
             <div className="max-w-5xl mx-auto space-y-6">
-                <div>
+                <div className="text-center sm:text-left">
                     <h1 className="text-3xl font-bold tracking-tight">Returns</h1>
                     <p className="text-muted-foreground">Pending returns with due dates and borrowers.</p>
                 </div>

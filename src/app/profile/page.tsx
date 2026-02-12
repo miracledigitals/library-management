@@ -34,7 +34,7 @@ export default function ProfilePage() {
         <ProtectedRoute>
             <DashboardLayout>
                 <div className="space-y-6 max-w-4xl mx-auto">
-                    <div>
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">
                             {isAdmin ? "Admin Profile" : "My Membership"}
                         </h1>
@@ -64,10 +64,10 @@ export default function ProfilePage() {
                             </CardHeader>
                             <CardContent className="space-y-4 pt-4 border-t">
                                 <div className="space-y-3">
-                                    <div className="flex items-center gap-3 text-sm">
+                                    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                         <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                                         <span className="font-medium">Account ID:</span>
-                                        <span className="font-mono text-xs ml-auto">{profile.id.slice(0, 8).toUpperCase()}</span>
+                                        <span className="font-mono text-xs sm:ml-auto">{profile.id.slice(0, 8).toUpperCase()}</span>
                                     </div>
                                     {!isAdmin && (
                                         <div className="flex items-center gap-3 text-sm text-muted-foreground italic">
@@ -160,7 +160,7 @@ export default function ProfilePage() {
                                         ) : (
                                             <div className="space-y-4">
                                                 {requests?.map((request) => (
-                                                    <div key={request.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                                                    <div key={request.id} className="flex flex-col gap-2 border-b pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                                                         <div className="space-y-1">
                                                             <p className="text-sm font-medium">{request.bookTitle}</p>
                                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                                                         <Badge variant={
                                                             request.status === "pending" ? "secondary" :
                                                                 request.status === "approved" ? "default" : "destructive"
-                                                        } className="capitalize">
+                                                        } className="capitalize self-start sm:self-auto">
                                                             {request.status}
                                                         </Badge>
                                                     </div>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div className="space-y-1">
                                             <p className="text-xs font-medium text-muted-foreground uppercase">Role</p>
                                             <p className="text-sm capitalize">{profile.role}</p>

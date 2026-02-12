@@ -76,8 +76,8 @@ export default function DashboardPage() {
         <ProtectedRoute>
             <DashboardLayout>
                 <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground">
                             {isPatron
@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
                 {isPatron && profile && (
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
                             <h2 className="text-xl font-bold tracking-tight">Active Book Loans</h2>
                             <Link href="/books">
                                 <Button variant="link" size="sm" className="text-primary font-bold">Browse More Books</Button>

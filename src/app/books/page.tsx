@@ -94,22 +94,22 @@ export default function BooksPage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Books</h1>
                         <p className="text-muted-foreground">
                             Manage your library&apos;s collection and inventory.
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                         {selectedIds.length > 0 && (
-                            <Button variant="destructive" onClick={handleBulkDelete}>
+                            <Button variant="destructive" onClick={handleBulkDelete} className="w-full sm:w-auto">
                                 Delete Selected ({selectedIds.length})
                             </Button>
                         )}
                         {profile?.role === "admin" && (
                             <Link href="/books/new">
-                                <Button className="gap-2">
+                                <Button className="gap-2 w-full sm:w-auto">
                                     <Plus className="h-4 w-4" />
                                     Add New Book
                                 </Button>
@@ -118,8 +118,8 @@ export default function BooksPage() {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 items-center bg-card p-4 rounded-lg border shadow-sm">
-                    <div className="relative flex-1 min-w-[300px]">
+                <div className="flex flex-col gap-3 bg-card p-4 rounded-lg border shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+                    <div className="relative w-full sm:flex-1 sm:min-w-[260px]">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search by title, author, or ISBN..."
@@ -130,7 +130,7 @@ export default function BooksPage() {
                     </div>
 
                     <Select value={genre} onValueChange={setGenre}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Genre" />
                         </SelectTrigger>
                         <SelectContent>
@@ -145,7 +145,7 @@ export default function BooksPage() {
                     </Select>
 
                     <Select value={status} onValueChange={setStatus}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -156,16 +156,16 @@ export default function BooksPage() {
                         </SelectContent>
                     </Select>
 
-                    <Button variant="ghost" onClick={resetFilters} className="gap-2">
+                    <Button variant="ghost" onClick={resetFilters} className="gap-2 w-full sm:w-auto">
                         <FilterX className="h-4 w-4" />
                         Reset
                     </Button>
 
-                    <div className="flex border rounded-md ml-auto">
+                    <div className="flex border rounded-md w-full sm:w-auto sm:ml-auto">
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
-                            className="rounded-r-none"
+                            className="rounded-r-none flex-1 sm:flex-none"
                             onClick={() => setViewMode("grid")}
                         >
                             <LayoutGrid className="h-4 w-4" />
@@ -173,7 +173,7 @@ export default function BooksPage() {
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
                             size="sm"
-                            className="rounded-l-none"
+                            className="rounded-l-none flex-1 sm:flex-none"
                             onClick={() => setViewMode("list")}
                         >
                             <ListIcon className="h-4 w-4" />

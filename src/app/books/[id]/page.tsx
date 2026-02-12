@@ -71,19 +71,19 @@ export default function BookDetailPage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <Button variant="ghost" onClick={() => router.push("/books")} className="gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <Button variant="ghost" onClick={() => router.push("/books")} className="gap-2 w-full sm:w-auto">
                         <ArrowLeft className="h-4 w-4" /> Back to List
                     </Button>
-                    <div className="flex gap-2">
-                        <Link href={`/books/${id}/edit`}>
-                            <Button variant="outline" className="gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                        <Link href={`/books/${id}/edit`} className="w-full sm:w-auto">
+                            <Button variant="outline" className="gap-2 w-full sm:w-auto">
                                 <Edit className="h-4 w-4" /> Edit
                             </Button>
                         </Link>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="gap-2">
+                                <Button variant="destructive" className="gap-2 w-full sm:w-auto">
                                     <Trash2 className="h-4 w-4" /> Delete
                                 </Button>
                             </AlertDialogTrigger>
@@ -135,28 +135,28 @@ export default function BookDetailPage() {
                     </Card>
 
                     <div className="md:col-span-2 space-y-6">
-                        <div className="space-y-2">
+                        <div className="space-y-2 text-center sm:text-left">
                             <h1 className="text-4xl font-bold tracking-tight">{book.title}</h1>
                             <p className="text-xl text-muted-foreground">{book.author}</p>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                 <Hash className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-semibold w-24">ISBN</span>
                                 <span className="font-mono">{book.isbn}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-semibold w-24">Location</span>
                                 <span>{book.location || "Not assigned"}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-semibold w-24">Published</span>
                                 <span>{book.publisher}, {book.publishedYear}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                 <Languages className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-semibold w-24">Language</span>
                                 <span className="capitalize">{book.metadata.language}</span>

@@ -48,7 +48,7 @@ export default function ReportsPage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div>
+                <div className="text-center sm:text-left">
                     <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
                     <p className="text-muted-foreground">Insights into library usage and collection performance.</p>
                 </div>
@@ -126,15 +126,15 @@ export default function ReportsPage() {
                             <CardTitle>Inventory Summary</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4">
-                            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+                            <div className="flex flex-col gap-2 text-center bg-muted/50 p-3 rounded-lg sm:flex-row sm:items-center sm:justify-between sm:text-left">
                                 <span className="text-sm font-medium">Total Collection Value</span>
                                 <span className="font-bold text-lg">$14,250.00</span>
                             </div>
-                            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+                            <div className="flex flex-col gap-2 text-center bg-muted/50 p-3 rounded-lg sm:flex-row sm:items-center sm:justify-between sm:text-left">
                                 <span className="text-sm font-medium">Lost Replacement Fund</span>
                                 <span className="font-bold text-lg text-rose-600">$500.00</span>
                             </div>
-                            <div className="flex justify-between items-center bg-muted/50 p-3 rounded-lg">
+                            <div className="flex flex-col gap-2 text-center bg-muted/50 p-3 rounded-lg sm:flex-row sm:items-center sm:justify-between sm:text-left">
                                 <span className="text-sm font-medium">Outstanding Fines</span>
                                 <span className="font-bold text-lg text-amber-600">$125.40</span>
                             </div>

@@ -81,12 +81,12 @@ export default function NewPatronPage() {
         <ProtectedRoute allowedRoles={["admin", "librarian"]}>
             <DashboardLayout>
                 <div className="max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Register Member</h1>
                         <p className="text-muted-foreground">Add a new member to the library system.</p>
                     </div>
-                    <Button variant="ghost" onClick={() => router.back()} className="gap-2">
+                    <Button variant="ghost" onClick={() => router.back()} className="gap-2 w-full sm:w-auto">
                         <X className="h-4 w-4" /> Cancel
                     </Button>
                 </div>
@@ -203,9 +203,9 @@ export default function NewPatronPage() {
                         </CardContent>
                     </Card>
 
-                    <div className="flex justify-end gap-4">
-                        <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={createPatron.isPending} className="gap-2">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                        <Button variant="outline" type="button" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
+                        <Button type="submit" disabled={createPatron.isPending} className="gap-2 w-full sm:w-auto">
                             {createPatron.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                             <UserPlus className="h-4 w-4" />
                             Register Member

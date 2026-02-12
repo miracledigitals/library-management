@@ -77,16 +77,16 @@ export default function PatronDetailPage() {
         <ProtectedRoute allowedRoles={["admin", "librarian"]}>
             <DashboardLayout>
                 <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <Button variant="ghost" onClick={() => router.push("/patrons")} className="gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <Button variant="ghost" onClick={() => router.push("/patrons")} className="gap-2 w-full sm:w-auto">
                         <ArrowLeft className="h-4 w-4" /> Back to List
                     </Button>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                        <Button variant="outline" className="gap-2 w-full sm:w-auto">
                             <Edit className="h-4 w-4" /> Edit Profile
                         </Button>
-                        <Link href="/checkout">
-                            <Button className="gap-2">
+                        <Link href="/checkout" className="w-full sm:w-auto">
+                            <Button className="gap-2 w-full sm:w-auto">
                                 <CreditCard className="h-4 w-4" /> New Checkout
                             </Button>
                         </Link>
@@ -110,26 +110,26 @@ export default function PatronDetailPage() {
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4">
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-sm">
+                                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                     <Mail className="h-4 w-4 text-muted-foreground" />
                                     <span>{patron.email}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-sm">
+                                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                     <Phone className="h-4 w-4 text-muted-foreground" />
                                     <span>{patron.phone || "No phone provided"}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-sm">
+                                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                     <span>{patron.address.street}, {patron.address.city}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-sm">
+                                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-3">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                     <span>Joined {format(new Date(patron.joinedAt), "MMM yyyy")}</span>
                                 </div>
                             </div>
 
                             <div className="pt-4 border-t">
-                                <div className="flex justify-between items-center mb-2">
+                                <div className="flex flex-col gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
                                     <span className="text-sm font-medium">Outstanding Fines</span>
                                     <span className={`font-bold ${patron.finesDue > 0 ? "text-rose-600" : "text-emerald-600"}`}>
                                         ${patron.finesDue.toFixed(2)}
@@ -165,7 +165,7 @@ export default function PatronDetailPage() {
                         </div>
 
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
+                            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <History className="h-5 w-5" /> Active Loans
                                 </CardTitle>
@@ -201,7 +201,7 @@ export default function PatronDetailPage() {
                         </Card>
 
                         {patron.finesDue > 20 && (
-                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-center gap-3">
+                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex flex-col gap-2 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
                                 <AlertTriangle className="h-5 w-5 text-rose-600" />
                                 <div>
                                     <div className="font-semibold text-rose-800">Account Blocked</div>

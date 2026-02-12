@@ -198,7 +198,7 @@ export default function SettingsPage() {
         <ProtectedRoute>
             <DashboardLayout>
                 <div className="space-y-6 max-w-4xl mx-auto">
-                    <div>
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
                         <p className="text-muted-foreground">
                             Manage your account preferences and application configuration.
@@ -258,7 +258,7 @@ export default function SettingsPage() {
                                         <Input value={profile.role} readOnly />
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="text-xs text-muted-foreground">
                                         {lastRoleRefresh ? `Last refreshed: ${lastRoleRefresh.toLocaleString()}` : "Not refreshed yet"}
                                     </div>
@@ -294,11 +294,11 @@ export default function SettingsPage() {
                                         onChange={(e) => setAdminEmail(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex flex-wrap justify-end gap-2">
-                                    <Button variant="outline" onClick={handleCreateAdminAccount} disabled={isCreatingAdmin}>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                    <Button variant="outline" onClick={handleCreateAdminAccount} disabled={isCreatingAdmin} className="w-full sm:w-auto">
                                         {isCreatingAdmin ? "Creating..." : "Create Admin Account"}
                                     </Button>
-                                    <Button onClick={handleForceAdminRole} disabled={isForcingAdmin}>
+                                    <Button onClick={handleForceAdminRole} disabled={isForcingAdmin} className="w-full sm:w-auto">
                                         {isForcingAdmin ? "Applying..." : "Force Admin Role"}
                                     </Button>
                                 </div>
@@ -322,14 +322,14 @@ export default function SettingsPage() {
                                 <CardDescription>Choose what updates you want to receive.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
                                         <Label>Email Notifications</Label>
                                         <p className="text-sm text-muted-foreground">Receive updates about your {isAdmin ? "system" : "borrowing"} activity.</p>
                                     </div>
                                     <Checkbox defaultChecked />
                                 </div>
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
                                         <Label>Due Date Reminders</Label>
                                         <p className="text-sm text-muted-foreground">Get notified when a book is due soon.</p>
@@ -337,7 +337,7 @@ export default function SettingsPage() {
                                     <Checkbox defaultChecked />
                                 </div>
                                 {isAdmin && (
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="space-y-0.5">
                                             <Label>System Alerts</Label>
                                             <p className="text-sm text-muted-foreground">Receive alerts about system health and critical errors.</p>
@@ -357,7 +357,7 @@ export default function SettingsPage() {
                                 <CardDescription>Manage your account security and authentication.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
                                         <Label>Two-Factor Authentication</Label>
                                         <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                                 <CardDescription>Customize your application experience.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
                                         <Label>Dark Mode</Label>
                                         <p className="text-sm text-muted-foreground">Toggle between light and dark themes.</p>
@@ -425,7 +425,7 @@ export default function SettingsPage() {
                                         onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
                                     />
                                 </div>
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
                                         <Label>Language</Label>
                                         <p className="text-sm text-muted-foreground">Select your preferred language.</p>
@@ -439,9 +439,9 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
 
-                        <div className="flex justify-end gap-4">
-                            <Button variant="ghost">Cancel</Button>
-                            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                            <Button variant="ghost" className="w-full sm:w-auto">Cancel</Button>
+                            <Button onClick={handleSave} disabled={isSaving} className="gap-2 w-full sm:w-auto">
                                 {isSaving ? "Saving..." : <><Save className="h-4 w-4" /> Save Changes</>}
                             </Button>
                         </div>

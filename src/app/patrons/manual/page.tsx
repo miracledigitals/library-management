@@ -55,11 +55,11 @@ export default function ManualRegistrationPage() {
         <ProtectedRoute allowedRoles={["admin"]}>
             <DashboardLayout>
                 <div className="max-w-xl mx-auto space-y-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:text-left">
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Shield className="h-6 w-6 text-primary" />
                         </div>
-                        <div>
+                        <div className="text-center sm:text-left">
                             <h1 className="text-3xl font-bold tracking-tight">Admin Onboarding</h1>
                             <p className="text-muted-foreground">Create a new admin account with elevated access.</p>
                         </div>

@@ -21,8 +21,8 @@ export default function CheckoutPage() {
     return (
         <DashboardLayout>
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                    <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
                         <p className="text-muted-foreground">All active loans currently checked out.</p>
                     </div>

@@ -82,7 +82,7 @@ export default function RequestsPage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div>
+                <div className="text-center sm:text-left">
                     <h1 className="text-3xl font-bold tracking-tight">Borrow Requests</h1>
                     <p className="text-muted-foreground">
                         Manage and approve book borrow applications from members.
@@ -102,7 +102,7 @@ export default function RequestsPage() {
                                         <TableHead>Member</TableHead>
                                         <TableHead>Book</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="text-left sm:text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -113,7 +113,7 @@ export default function RequestsPage() {
                                                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                                 <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                                                 <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                                                <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                                            <TableCell className="text-left sm:text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                                             </TableRow>
                                         ))
                                     ) : requests?.length === 0 ? (
@@ -143,7 +143,7 @@ export default function RequestsPage() {
                                                         {request.status}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-left sm:text-right">
                                                     {request.status === "pending" ? (
                                                         <div className="flex justify-end gap-2">
                                                             <Button

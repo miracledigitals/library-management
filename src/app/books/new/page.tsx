@@ -124,12 +124,12 @@ export default function NewBookPage() {
         <ProtectedRoute allowedRoles={["admin"]}>
             <DashboardLayout>
                 <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                        <div className="text-center sm:text-left">
                             <h1 className="text-3xl font-bold tracking-tight">Add New Book</h1>
                             <p className="text-muted-foreground">Register a new title in the library catalog.</p>
                         </div>
-                        <Button variant="ghost" onClick={() => router.back()} className="gap-2">
+                        <Button variant="ghost" onClick={() => router.back()} className="gap-2 w-full sm:w-auto">
                             <X className="h-4 w-4" /> Cancel
                         </Button>
                     </div>
@@ -143,7 +143,7 @@ export default function NewBookPage() {
                             <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="bookSearch">Search Books</Label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col gap-2 sm:flex-row">
                                     <Input
                                         id="bookSearch"
                                         placeholder="Search by title or author"
@@ -155,6 +155,7 @@ export default function NewBookPage() {
                                         variant="outline"
                                         onClick={handleSearch}
                                         disabled={isSearching}
+                                        className="w-full sm:w-auto"
                                     >
                                         {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                                     </Button>
@@ -185,7 +186,7 @@ export default function NewBookPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="isbn">ISBN</Label>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-col gap-2 sm:flex-row">
                                             <Input
                                                 id="isbn"
                                                 placeholder="9780..."
@@ -197,6 +198,7 @@ export default function NewBookPage() {
                                                 variant="outline"
                                                 onClick={handleLookup}
                                                 disabled={isLookingUp}
+                                                className="w-full sm:w-auto"
                                             >
                                                 {isLookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                                             </Button>
@@ -288,18 +290,19 @@ export default function NewBookPage() {
                             </CardContent>
                         </Card>
 
-                        <div className="flex justify-end gap-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => router.back()}
+                                className="w-full sm:w-auto"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
-                                className="gap-2"
                                 disabled={createBook.isPending}
+                                className="gap-2 w-full sm:w-auto"
                             >
                                 {createBook.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Save Book Title
