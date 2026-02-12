@@ -11,9 +11,14 @@ export async function POST(request: Request) {
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
         const allowedEmail = process.env.ADMIN_BOOTSTRAP_EMAIL || "";
 
-        if (!supabaseUrl || !serviceRoleKey || !allowedEmail) {
+        const missingConfig: string[] = [];
+        if (!supabaseUrl) missingConfig.push("NEXT_PUBLIC_SUPABASE_URL");
+        if (!serviceRoleKey) missingConfig.push("SUPABASE_SERVICE_ROLE_KEY");
+        if (!allowedEmail) missingConfig.push("ADMIN_BOOTSTRAP_EMAIL");
+
+        if (missingConfig.length > 0) {
             return NextResponse.json(
-                { error: "Missing bootstrap configuration." },
+                { error: "Missing bootstrap configuration.", missing: missingConfig },
                 { status: 500 }
             );
         }
