@@ -35,7 +35,10 @@ export default function SettingsPage() {
     const [isRefreshingRole, setIsRefreshingRole] = useState(false);
     const [lastRoleRefresh, setLastRoleRefresh] = useState<Date | null>(null);
     const [adminEmail, setAdminEmail] = useState("");
+    const [adminFullName, setAdminFullName] = useState("");
     const [isForcingAdmin, setIsForcingAdmin] = useState(false);
+    const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+    const [adminTempPassword, setAdminTempPassword] = useState("");
 
     useEffect(() => {
         if (profile?.displayName) {
@@ -140,14 +143,54 @@ export default function SettingsPage() {
             if (!response.ok) {
                 throw new Error(data?.error || "Failed to force admin role.");
             }
+            if (data?.tempPassword) {
+                setAdminTempPassword(data.tempPassword);
+            } else {
+                setAdminTempPassword("");
+            }
             await refreshProfile();
             setLastRoleRefresh(new Date());
-            toast.success("Admin role applied.");
+            toast.success(data?.created ? "Admin account created." : "Admin role applied.");
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Failed to force admin role.";
             toast.error(message);
         } finally {
             setIsForcingAdmin(false);
+        }
+    };
+
+    const handleCreateAdminAccount = async () => {
+        if (!adminEmail.trim()) {
+            toast.error("Enter an email to create the admin account.");
+            return;
+        }
+        setIsCreatingAdmin(true);
+        try {
+            const response = await fetch("/api/admin/force-role", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: adminEmail.trim(),
+                    fullName: adminFullName.trim()
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || "Failed to create admin account.");
+            }
+            if (data?.tempPassword) {
+                setAdminTempPassword(data.tempPassword);
+            } else {
+                setAdminTempPassword("");
+            }
+            await refreshProfile();
+            setLastRoleRefresh(new Date());
+            toast.success(data?.created ? "Admin account created." : "Admin role applied.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to create admin account.";
+            toast.error(message);
+        } finally {
+            setIsCreatingAdmin(false);
         }
     };
 
@@ -235,6 +278,15 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="space-y-2">
+                                    <Label htmlFor="adminFullName">Full Name</Label>
+                                    <Input
+                                        id="adminFullName"
+                                        value={adminFullName}
+                                        onChange={(e) => setAdminFullName(e.target.value)}
+                                        placeholder="Admin full name"
+                                    />
+                                </div>
+                                <div className="space-y-2">
                                     <Label htmlFor="adminEmail">Target Email</Label>
                                     <Input
                                         id="adminEmail"
@@ -242,10 +294,22 @@ export default function SettingsPage() {
                                         onChange={(e) => setAdminEmail(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex justify-end">
+                                <div className="flex flex-wrap justify-end gap-2">
+                                    <Button variant="outline" onClick={handleCreateAdminAccount} disabled={isCreatingAdmin}>
+                                        {isCreatingAdmin ? "Creating..." : "Create Admin Account"}
+                                    </Button>
                                     <Button onClick={handleForceAdminRole} disabled={isForcingAdmin}>
                                         {isForcingAdmin ? "Applying..." : "Force Admin Role"}
                                     </Button>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="adminTempPassword">Temporary Password</Label>
+                                    <Input
+                                        id="adminTempPassword"
+                                        value={adminTempPassword}
+                                        readOnly
+                                        placeholder="Generated after admin creation"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>

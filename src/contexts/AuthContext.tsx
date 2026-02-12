@@ -249,13 +249,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error("Supabase is not configured. Please set environment variables.");
         }
         try {
+            const redirectTo = `${window.location.origin}/login`;
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     queryParams: {
                         prompt: 'select_account',
                     },
-                    redirectTo: `${window.location.origin}/dashboard`,
+                    redirectTo,
+                    skipBrowserRedirect: false,
                 }
             });
 
