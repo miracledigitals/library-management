@@ -120,7 +120,7 @@ export function usePatron(id: string) {
 }
 
 export function usePatronByEmail(email?: string | null) {
-    const normalizedEmail = email?.trim() || "";
+    const normalizedEmail = email?.trim().toLowerCase() || "";
     return useQuery({
         queryKey: ["patrons", "email", normalizedEmail],
         queryFn: async () => {
@@ -130,7 +130,7 @@ export function usePatronByEmail(email?: string | null) {
             const { data, error } = await supabase
                 .from('patrons')
                 .select('*')
-                .ilike('email', normalizedEmail)
+                .eq('email', normalizedEmail)
                 .maybeSingle();
 
             if (error) {

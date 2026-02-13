@@ -52,6 +52,18 @@ CREATE TABLE IF NOT EXISTS patrons (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE OR REPLACE FUNCTION normalize_patron_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.email = lower(trim(NEW.email));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER patrons_normalize_email
+BEFORE INSERT OR UPDATE ON patrons
+FOR EACH ROW EXECUTE FUNCTION normalize_patron_email();
+
 -- Create checkouts table
 CREATE TABLE IF NOT EXISTS checkouts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -140,22 +152,22 @@ CREATE POLICY "Admins/Librarians can manage books" ON books FOR ALL USING (is_li
 ALTER TABLE patrons ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
-  lower(email) = lower(auth.jwt() ->> 'email')
+  lower(trim(email)) = lower(trim(auth.jwt() ->> 'email'))
 );
 
 -- Checkouts: Admins/Librarians manage all, patrons read their own
 ALTER TABLE checkouts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins/Librarians can manage checkouts" ON checkouts FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Patrons can read their own checkouts" ON checkouts FOR SELECT USING (
-  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
+  patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
 );
 
 -- Borrow Requests: All can read/create, admins manage
 ALTER TABLE borrow_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage their own requests" ON borrow_requests FOR ALL USING (
-  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
+  patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
 ) WITH CHECK (
-  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
+  patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
 );
 CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (is_librarian_or_admin());
 
