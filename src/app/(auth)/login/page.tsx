@@ -6,6 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Book, Chrome } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,6 +21,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
+    const [role, setRole] = useState<"patron" | "admin">("patron");
     const [loading, setLoading] = useState(false);
     const { user, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
@@ -32,7 +40,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             if (isRegistering) {
-                await register(email, password, fullName, "patron");
+                await register(email, password, fullName, role);
                 toast.success("Account created! You can now log in.");
                 setIsRegistering(false);
             } else {
@@ -133,6 +141,23 @@ export default function LoginPage() {
                                         onChange={(e) => setFullName(e.target.value)}
                                         className="h-11"
                                     />
+                                </div>
+                            )}
+                            {isRegistering && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="role">Account Type</Label>
+                                    <Select
+                                        value={role}
+                                        onValueChange={(value: "patron" | "admin") => setRole(value)}
+                                    >
+                                        <SelectTrigger className="h-11">
+                                            <SelectValue placeholder="Select account type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="patron">Library Patron</SelectItem>
+                                            <SelectItem value="admin">Administrator</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             )}
                             <div className="space-y-2">

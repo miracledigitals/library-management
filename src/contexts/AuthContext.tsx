@@ -248,12 +248,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_BOOTSTRAP_EMAIL;
         const targetRole = (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) ? "admin" : role;
 
-        if (targetRole === "admin" && (role !== "admin" || (profileRef.current?.role !== "admin" && email.toLowerCase() !== adminEmail?.toLowerCase()))) {
-            if (email.toLowerCase() !== adminEmail?.toLowerCase()) {
-                throw new Error("Only admins can create new admin accounts.");
-            }
-        }
-
         const { error } = await supabase.auth.signUp({
             email,
             password,
