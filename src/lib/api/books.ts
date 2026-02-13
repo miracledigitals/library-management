@@ -103,6 +103,9 @@ export function useCreateBook() {
         mutationFn: async (book: Omit<Book, "id" | "addedAt" | "updatedAt">) => {
             assertSupabaseConfigured();
             
+            // Log the payload for debugging
+            console.log("Creating book with payload:", book);
+
             const { data, error } = await supabase
                 .from('books')
                 .insert([{
@@ -119,17 +122,24 @@ export function useCreateBook() {
                     location: book.location,
                     status: book.status,
                     metadata: book.metadata,
-                    added_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
                 }])
-                .select()
-                .single();
+                .select();
 
             if (error) {
                 console.error("Supabase error creating book:", error);
-                throw error;
+                throw {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                };
             }
-            return data;
+            
+            if (!data || data.length === 0) {
+                throw new Error("Book was created but could not be retrieved from the database. This might be due to Row Level Security (RLS) policies.");
+            }
+            
+            return data[0];
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["books"] });

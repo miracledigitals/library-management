@@ -201,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Fallback to metadata if profile not found in database
                 // This ensures the user isn't locked out if the database trigger is slow or fails
                 const metadataRole = supabaseUser.user_metadata?.role || "patron";
-                console.warn(`Profile not found in DB for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
+                console.warn(`Profile not found in 'profiles' table for user ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}. Database operations may fail due to RLS policies.`);
                 
                 setUser(supabaseUser);
                 setProfile({

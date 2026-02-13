@@ -110,12 +110,19 @@ export default function NewBookPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!formData.isbn || !formData.title || !formData.author) {
+            toast.error("ISBN, Title, and Author are required fields.");
+            return;
+        }
+
         try {
             await createBook.mutateAsync(formData);
             toast.success("Book added successfully");
             router.push("/books");
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Failed to add book";
+        } catch (error: any) {
+            console.error("Full error object:", error);
+            const message = error?.message || error?.details || (typeof error === 'string' ? error : "Failed to add book");
             toast.error(message);
         }
     };
