@@ -127,11 +127,14 @@ export function usePatronByEmail(email?: string | null) {
             if (!normalizedEmail) return null;
             assertSupabaseConfigured();
 
+            console.log("Debug: Looking up patron with normalized email:", normalizedEmail);
             const { data, error } = await supabase
                 .from('patrons')
                 .select('*')
-                .eq('email', normalizedEmail)
+                .ilike('email', normalizedEmail)
                 .maybeSingle();
+
+            console.log("Debug: Supabase response - data:", data, "error:", error);
 
             if (error) {
                 console.error(`Supabase error fetching patron by email ${normalizedEmail}:`, error);

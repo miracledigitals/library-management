@@ -47,7 +47,9 @@ export default function BooksPage() {
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
     const patronEmail = profile?.email || user?.email || "";
+    console.log("Debug: profile email:", profile?.email, "user email:", user?.email, "patronEmail:", patronEmail);
     const { data: patron } = usePatronByEmail(patronEmail);
+    console.log("Debug: patron lookup result:", patron, "for email:", patronEmail);
     const { data: myRequests } = usePatronRequests(patron?.id || "");
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
@@ -90,6 +92,12 @@ export default function BooksPage() {
     };
 
     const handleRequestBorrow = (book: BookType) => {
+        console.log("Debug: Opening borrow modal for book:", book.title, "patron:", patron);
+        if (!patron?.id) {
+            console.error("Debug: Cannot open borrow modal - patron not found");
+            toast.error("Patron profile not found. Please complete your patron registration.");
+            return;
+        }
         setSelectedBookForModal(book);
         setIsModalOpen(true);
     };
