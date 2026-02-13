@@ -160,22 +160,29 @@ export function useCreatePatron() {
                 fines_due: 0
             };
 
-            const { data, error } = await supabase
-                .from('patrons')
-                .insert([dbData])
-                .select()
-                .single();
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
-            if (error) {
-                console.error("Supabase error creating patron:", error);
-                console.error("Supabase error details:", {
-                    message: error.message,
-                    code: error.code,
-                    details: error.details,
-                    hint: error.hint,
-                });
-                throw error;
+            if (!token) {
+                throw new Error("No active session");
             }
+
+            const response = await fetch('/api/patrons', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(dbData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("API error creating patron:", data);
+                throw new Error(data.error || "Failed to create patron");
+            }
+
             return mapPatronFromDB(data);
         },
         onSuccess: () => {
