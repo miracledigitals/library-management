@@ -141,11 +141,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             try {
                 // Fetch user profile from PostgreSQL
+                // Use maybeSingle to handle cases where there might be 0 or >1 records during development
                 const { data, error } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', supabaseUser.id)
-                    .single();
+                    .maybeSingle();
 
                 if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
 
@@ -160,12 +161,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         finesDue: parseFloat(data.fines_due),
                     });
                 } else {
+                    // Fallback to metadata if profile not found or fetch failed
+                    const metadataRole = supabaseUser.user_metadata?.role || "patron";
+                    console.log(`Profile fetch failed or empty for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
+                    
                     setUser(supabaseUser);
                     setProfile({
                         id: supabaseUser.id,
                         email: supabaseUser.email || "",
                         displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
-                        role: "patron",
+                        role: metadataRole,
                     });
                 }
             } catch (err) {
@@ -236,11 +241,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
         if (!isSupabaseConfigured) {
-                throw new Error("Supabase is not configured. Please set environment variables.");
+            throw new Error("Supabase is not configured. Please set environment variables.");
         }
 
-        if (role === "admin" && profileRef.current?.role !== "admin") {
-            throw new Error("Only admins can create new admin accounts.");
+        // Allow registration as admin if email matches the bootstrap email
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_BOOTSTRAP_EMAIL;
+        const targetRole = (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) ? "admin" : role;
+
+        if (targetRole === "admin" && (role !== "admin" || (profileRef.current?.role !== "admin" && email.toLowerCase() !== adminEmail?.toLowerCase()))) {
+            if (email.toLowerCase() !== adminEmail?.toLowerCase()) {
+                throw new Error("Only admins can create new admin accounts.");
+            }
         }
 
         const { error } = await supabase.auth.signUp({
@@ -249,7 +260,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             options: {
                 data: {
                     full_name: fullName,
-                    role: role,
+                    role: targetRole,
                 },
             },
         });

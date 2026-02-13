@@ -38,7 +38,7 @@ export default function LoginPage() {
             } else {
                 await login(email, password);
                 toast.success("Logged in successfully");
-                // Explicitly push to dashboard to ensure transition on mobile
+                // Explicitly push to dashboard to ensure transition on mobile (Force Save)
                 router.push("/dashboard");
             }
         } catch (error: unknown) {
