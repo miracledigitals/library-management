@@ -99,34 +99,53 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 
 -- Set up Row Level Security (RLS)
 
+-- Helper functions to check roles without recursion
+CREATE OR REPLACE FUNCTION is_admin() 
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() 
+      AND role = 'admin'
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION is_librarian_or_admin() 
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'librarian')
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Profiles: Users can read their own, admins can read all
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Admins/Librarians can manage all profiles" ON profiles FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins/Librarians can manage all profiles" ON profiles FOR ALL USING (is_librarian_or_admin());
 
 -- Books: All authenticated users can read, admins/librarians can manage
 ALTER TABLE books ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can read books" ON books FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins/Librarians can manage books" ON books FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins/Librarians can manage books" ON books FOR ALL USING (is_librarian_or_admin());
 
 -- Patrons: Admins/Librarians can manage all, users can read their own (matched by email)
 ALTER TABLE patrons ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
   email = (SELECT email FROM auth.users WHERE id = auth.uid())
 );
 
 -- Checkouts: Admins/Librarians manage all, patrons read their own
 ALTER TABLE checkouts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins/Librarians can manage checkouts" ON checkouts FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins/Librarians can manage checkouts" ON checkouts FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Patrons can read their own checkouts" ON checkouts FOR SELECT USING (
   patron_id IN (SELECT id FROM patrons WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
 );
@@ -135,16 +154,14 @@ CREATE POLICY "Patrons can read their own checkouts" ON checkouts FOR SELECT USI
 ALTER TABLE borrow_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage their own requests" ON borrow_requests FOR ALL USING (
   patron_id IN (SELECT id FROM patrons WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
+) WITH CHECK (
+  patron_id IN (SELECT id FROM patrons WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
 );
-CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (is_librarian_or_admin());
 
 -- Activity Logs: Admins read all, users create
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can read activity logs" ON activity_logs FOR SELECT USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
-);
+CREATE POLICY "Admins can read activity logs" ON activity_logs FOR SELECT USING (is_librarian_or_admin());
 CREATE POLICY "Authenticated users can insert logs" ON activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- RPC for Process Return

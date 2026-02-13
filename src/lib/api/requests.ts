@@ -127,17 +127,25 @@ export function useProcessRequest() {
                     .eq('id', requestId)
                     .single();
 
-                if (fetchError || !requestData) throw new Error("Request not found");
+                if (fetchError || !requestData) {
+                    console.error("Error fetching request for processing:", fetchError);
+                    throw new Error("Request not found");
+                }
 
                 const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + 14);
 
-                await performCheckout(
-                    requestData.patron_id,
-                    [requestData.book_id],
-                    staffUserId,
-                    dueDate
-                );
+                try {
+                    await performCheckout(
+                        requestData.patron_id,
+                        [requestData.book_id],
+                        staffUserId,
+                        dueDate
+                    );
+                } catch (checkoutError: any) {
+                    console.error("Checkout transaction failed during approval:", checkoutError);
+                    throw checkoutError;
+                }
             }
 
             const { error } = await supabase
@@ -145,11 +153,13 @@ export function useProcessRequest() {
                 .update({
                     status,
                     admin_notes: adminNotes || "",
-                    updated_at: new Date().toISOString()
                 })
                 .eq('id', requestId);
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error processing request ${requestId}:`, error);
+                throw error;
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["borrow_requests"] });

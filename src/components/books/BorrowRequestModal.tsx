@@ -69,8 +69,9 @@ export function BorrowRequestModal({
             toast.success("Borrow application submitted!");
             onOpenChange(false);
             setStep(1); // Reset for next time
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Failed to submit application";
+        } catch (error: any) {
+            console.error("Borrow request error:", error);
+            const message = error?.message || error?.details || (typeof error === 'string' ? error : "Failed to submit application");
             toast.error(message);
         }
     };
