@@ -32,8 +32,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         );
     }
 
-    if (!user) return null;
-    if (allowedRoles && profile && !allowedRoles.includes(profile.role)) return null;
+    if (!user || !profile) return null;
+    if (allowedRoles && !allowedRoles.includes(profile.role)) return null;
 
     return <>{children}</>;
 }

@@ -172,9 +172,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         finesDue: parseFloat(data.fines_due),
                     });
                 } else {
-                    // Fallback to metadata if profile not found or fetch failed
+                    // Fallback to metadata if profile not found in database
+                    // This ensures the user isn't locked out if the database trigger is slow or fails
                     const metadataRole = supabaseUser.user_metadata?.role || "patron";
-                    console.warn(`Profile not found in DB or fetch failed for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}. Error: ${error?.message || 'none'}`);
+                    console.warn(`Profile not found in DB for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
                     
                     setUser(supabaseUser);
                     setProfile({
