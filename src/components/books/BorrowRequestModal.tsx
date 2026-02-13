@@ -56,6 +56,13 @@ export function BorrowRequestModal({
     const handleSubmit = async () => {
         if (!termsAgreed) return;
 
+        console.log("Submitting borrow request with:", {
+            bookId: book.id,
+            patronId,
+            patronName,
+            bookTitle: book.title
+        });
+
         try {
             await createRequest.mutateAsync({
                 bookId: book.id || "",
