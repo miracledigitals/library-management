@@ -140,22 +140,22 @@ CREATE POLICY "Admins/Librarians can manage books" ON books FOR ALL USING (is_li
 ALTER TABLE patrons ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
-  email = auth.jwt() ->> 'email'
+  lower(email) = lower(auth.jwt() ->> 'email')
 );
 
 -- Checkouts: Admins/Librarians manage all, patrons read their own
 ALTER TABLE checkouts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins/Librarians can manage checkouts" ON checkouts FOR ALL USING (is_librarian_or_admin());
 CREATE POLICY "Patrons can read their own checkouts" ON checkouts FOR SELECT USING (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 );
 
 -- Borrow Requests: All can read/create, admins manage
 ALTER TABLE borrow_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage their own requests" ON borrow_requests FOR ALL USING (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 ) WITH CHECK (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 );
 CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (is_librarian_or_admin());
 

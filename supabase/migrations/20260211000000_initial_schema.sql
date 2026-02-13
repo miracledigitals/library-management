@@ -119,7 +119,7 @@ CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
 );
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
-  email = auth.jwt() ->> 'email'
+  lower(email) = lower(auth.jwt() ->> 'email')
 );
 
 -- Checkouts: Admins/Librarians manage all, patrons read their own
@@ -128,15 +128,15 @@ CREATE POLICY "Admins/Librarians can manage checkouts" ON checkouts FOR ALL USIN
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
 );
 CREATE POLICY "Patrons can read their own checkouts" ON checkouts FOR SELECT USING (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 );
 
 -- Borrow Requests: All can read/create, admins manage
 ALTER TABLE borrow_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage their own requests" ON borrow_requests FOR ALL USING (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 ) WITH CHECK (
-  patron_id IN (SELECT id FROM patrons WHERE email = auth.jwt() ->> 'email')
+  patron_id IN (SELECT id FROM patrons WHERE lower(email) = lower(auth.jwt() ->> 'email'))
 );
 CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))

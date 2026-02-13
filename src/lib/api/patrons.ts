@@ -120,20 +120,21 @@ export function usePatron(id: string) {
 }
 
 export function usePatronByEmail(email?: string | null) {
+    const normalizedEmail = email?.trim() || "";
     return useQuery({
-        queryKey: ["patrons", "email", email ?? ""],
+        queryKey: ["patrons", "email", normalizedEmail],
         queryFn: async () => {
-            if (!email) return null;
+            if (!normalizedEmail) return null;
             assertSupabaseConfigured();
 
             const { data, error } = await supabase
                 .from('patrons')
                 .select('*')
-                .eq('email', email)
+                .ilike('email', normalizedEmail)
                 .maybeSingle();
 
             if (error) {
-                console.error(`Supabase error fetching patron by email ${email}:`, error);
+                console.error(`Supabase error fetching patron by email ${normalizedEmail}:`, error);
                 throw error;
             }
 
