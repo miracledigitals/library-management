@@ -168,6 +168,12 @@ export function useCreatePatron() {
 
             if (error) {
                 console.error("Supabase error creating patron:", error);
+                console.error("Supabase error details:", {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
                 throw error;
             }
             return mapPatronFromDB(data);

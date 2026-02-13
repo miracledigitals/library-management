@@ -13,7 +13,7 @@ import {
     UserPlus
 } from "lucide-react";
 import { useBooks } from "@/lib/api/books";
-import { usePatron } from "@/lib/api/patrons";
+import { usePatronByEmail } from "@/lib/api/patrons";
 import { useActiveCheckouts } from "@/lib/api/checkouts";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -24,7 +24,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function DashboardPage() {
     const { profile, user } = useAuth();
     const { data: books, isLoading: booksLoading } = useBooks();
-    const { data: patronData } = usePatron(profile?.id || "");
+    const patronEmail = profile?.email || user?.email || "";
+    const { data: patronData } = usePatronByEmail(patronEmail);
     const { data: activeCheckouts, isLoading: checkoutsLoading } = useActiveCheckouts();
 
     // For patrons, we might want to fetch their specific checkouts too
