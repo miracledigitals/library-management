@@ -56,28 +56,32 @@ export function BorrowRequestModal({
     const handleSubmit = async () => {
         if (!termsAgreed) return;
 
-        console.log("Submitting borrow request with:", {
-            bookId: book.id,
-            patronId,
-            patronName,
-            bookTitle: book.title
-        });
+        // Improved logging for debugging
+        console.log("DEBUG: BorrowRequestModal.handleSubmit starting");
+        console.log("DEBUG: Patron ID:", patronId);
+        console.log("DEBUG: Book ID:", book.id);
+        console.log("DEBUG: Patron Name:", patronName);
 
         try {
-            await createRequest.mutateAsync({
+            const result = await createRequest.mutateAsync({
                 bookId: book.id || "",
                 patronId,
                 requesterName: patronName,
                 bookTitle: book.title,
-                // These would be stored in metadata or specific fields if we update the schema, 
-                // but for now we'll stick to the basic schema and add notes
                 adminNotes: `Pickup: ${pickupLocation} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested slow reader extension." : ""}`
             });
+            console.log("DEBUG: Borrow request successfully created:", result);
             toast.success("Borrow application submitted!");
             onOpenChange(false);
-            setStep(1); // Reset for next time
+            setStep(1); 
         } catch (error: any) {
-            console.error("Borrow request error:", error);
+            console.error("DEBUG: Borrow request error details:", {
+                message: error?.message,
+                details: error?.details,
+                hint: error?.hint,
+                code: error?.code,
+                fullError: error
+            });
             const message = error?.message || error?.details || (typeof error === 'string' ? error : "Failed to submit application");
             toast.error(message);
         }
