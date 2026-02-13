@@ -55,34 +55,37 @@ export function BorrowRequestModal({
 
     const handleSubmit = async () => {
         if (!termsAgreed) return;
-
-        // Improved logging for debugging
-        console.log("DEBUG: BorrowRequestModal.handleSubmit starting");
-        console.log("DEBUG: Patron ID:", patronId);
-        console.log("DEBUG: Book ID:", book.id);
-        console.log("DEBUG: Patron Name:", patronName);
+        if (!patronId) {
+            toast.error("Patron profile not found. Please complete your patron registration.");
+            return;
+        }
 
         try {
-            const result = await createRequest.mutateAsync({
+            await createRequest.mutateAsync({
                 bookId: book.id || "",
                 patronId,
                 requesterName: patronName,
                 bookTitle: book.title,
                 adminNotes: `Pickup: ${pickupLocation} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested slow reader extension." : ""}`
             });
-            console.log("DEBUG: Borrow request successfully created:", result);
             toast.success("Borrow application submitted!");
             onOpenChange(false);
             setStep(1); 
-        } catch (error: any) {
-            console.error("DEBUG: Borrow request error details:", {
-                message: error?.message,
-                details: error?.details,
-                hint: error?.hint,
-                code: error?.code,
+        } catch (error: unknown) {
+            const errorData = error as {
+                message?: string;
+                details?: string;
+                hint?: string;
+                code?: string;
+            };
+            console.error("Borrow request error details:", {
+                message: errorData?.message,
+                details: errorData?.details,
+                hint: errorData?.hint,
+                code: errorData?.code,
                 fullError: error
             });
-            const message = error?.message || error?.details || (typeof error === 'string' ? error : "Failed to submit application");
+            const message = errorData?.message || errorData?.details || (typeof error === 'string' ? error : "Failed to submit application");
             toast.error(message);
         }
     };

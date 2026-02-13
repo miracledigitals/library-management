@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDeleteBook } from "@/lib/api/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateBorrowRequest, usePatronRequests } from "@/lib/api/requests";
+import { usePatronByEmail } from "@/lib/api/patrons";
 import { Loader2, BookCheck, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -45,7 +46,9 @@ export default function BooksPage() {
 
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
-    const { data: myRequests } = usePatronRequests(user?.id || "");
+    const patronEmail = profile?.email || user?.email || "";
+    const { data: patron } = usePatronByEmail(patronEmail);
+    const { data: myRequests } = usePatronRequests(patron?.id || "");
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
 
@@ -365,7 +368,7 @@ export default function BooksPage() {
                     book={selectedBookForModal}
                     open={isModalOpen}
                     onOpenChange={setIsModalOpen}
-                    patronId={user?.id || ""}
+                    patronId={patron?.id || ""}
                     patronName={profile?.displayName || profile?.email || "Patron"}
                 />
             )}

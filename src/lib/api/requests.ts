@@ -142,7 +142,7 @@ export function useProcessRequest() {
                         staffUserId,
                         dueDate
                     );
-                } catch (checkoutError: any) {
+                } catch (checkoutError: unknown) {
                     console.error("Checkout transaction failed during approval:", checkoutError);
                     throw checkoutError;
                 }

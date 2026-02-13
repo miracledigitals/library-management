@@ -153,7 +153,7 @@ export function useUpdateBook() {
         mutationFn: async ({ id, ...data }: Partial<Book> & { id: string }) => {
             assertSupabaseConfigured();
             
-            const updatePayload: any = {
+            const updatePayload: Record<string, unknown> = {
                 updated_at: new Date().toISOString(),
             };
 

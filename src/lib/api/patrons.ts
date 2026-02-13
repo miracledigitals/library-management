@@ -119,6 +119,30 @@ export function usePatron(id: string) {
     });
 }
 
+export function usePatronByEmail(email?: string | null) {
+    return useQuery({
+        queryKey: ["patrons", "email", email ?? ""],
+        queryFn: async () => {
+            if (!email) return null;
+            assertSupabaseConfigured();
+
+            const { data, error } = await supabase
+                .from('patrons')
+                .select('*')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (error) {
+                console.error(`Supabase error fetching patron by email ${email}:`, error);
+                throw error;
+            }
+
+            return data ? mapPatronFromDB(data) : null;
+        },
+        enabled: !!email,
+    });
+}
+
 export function useCreatePatron() {
     const queryClient = useQueryClient();
     return useMutation({

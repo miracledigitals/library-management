@@ -120,9 +120,10 @@ export default function NewBookPage() {
             await createBook.mutateAsync(formData);
             toast.success("Book added successfully");
             router.push("/books");
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorData = error as { message?: string; details?: string };
             console.error("Full error object:", error);
-            const message = error?.message || error?.details || (typeof error === 'string' ? error : "Failed to add book");
+            const message = errorData?.message || errorData?.details || (typeof error === 'string' ? error : "Failed to add book");
             toast.error(message);
         }
     };
