@@ -43,7 +43,10 @@ export function useBorrowRequests(status?: BorrowRequest['status']) {
             }
 
             const { data, error } = await query;
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error fetching borrow requests:", error);
+                throw error;
+            }
             return (data || []).map(mapBorrowRequestFromDB);
         },
     });
@@ -62,7 +65,10 @@ export function usePatronRequests(patronId: string) {
                 .eq('patron_id', patronId)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error fetching borrow requests for patron ${patronId}:`, error);
+                throw error;
+            }
             return (data || []).map(mapBorrowRequestFromDB);
         },
         enabled: !!patronId,
@@ -86,7 +92,10 @@ export function useCreateBorrowRequest() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error creating borrow request:", error);
+                throw error;
+            }
             return mapBorrowRequestFromDB(data);
         },
         onSuccess: () => {

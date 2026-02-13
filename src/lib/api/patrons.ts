@@ -58,8 +58,9 @@ function mapPatronToDB(patron: Partial<Patron>) {
     if (patron.address) data.address = patron.address;
     if (patron.membershipStatus) data.membership_status = patron.membershipStatus;
     if (patron.membershipType) data.membership_type = patron.membershipType;
+    if (patron.maxBooksAllowed !== undefined) data.max_books_allowed = patron.maxBooksAllowed;
+    if (patron.expiryDate) data.expiry_date = patron.expiryDate;
     if (patron.notes !== undefined) data.notes = patron.notes;
-    // ... add more as needed
     return data;
 }
 
@@ -86,7 +87,10 @@ export function usePatrons(filters?: { search?: string; type?: string; status?: 
             }
 
             const { data, error } = await query;
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error fetching patrons:", error);
+                throw error;
+            }
             return (data || []).map(mapPatronFromDB);
         },
     });
@@ -105,7 +109,10 @@ export function usePatron(id: string) {
                 .eq('id', id)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error fetching patron ${id}:`, error);
+                throw error;
+            }
             return mapPatronFromDB(data);
         },
         enabled: !!id,
@@ -116,6 +123,7 @@ export function useCreatePatron() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (patron: Omit<Patron, "id" | "joinedAt">) => {
+            assertSupabaseConfigured();
             const dbData = {
                 ...mapPatronToDB(patron),
                 joined_at: new Date().toISOString(),
@@ -130,7 +138,10 @@ export function useCreatePatron() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error creating patron:", error);
+                throw error;
+            }
             return mapPatronFromDB(data);
         },
         onSuccess: () => {
@@ -143,12 +154,16 @@ export function useUpdatePatron() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...data }: Partial<Patron> & { id: string }) => {
+            assertSupabaseConfigured();
             const { error } = await supabase
                 .from('patrons')
                 .update(mapPatronToDB(data))
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error updating patron ${id}:`, error);
+                throw error;
+            }
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["patrons"] });

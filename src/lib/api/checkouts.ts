@@ -62,7 +62,10 @@ export function usePatronCheckouts(patronId: string | undefined) {
                 .eq('patron_id', patronId)
                 .in('status', ['active', 'overdue']);
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error fetching checkouts for patron ${patronId}:`, error);
+                throw error;
+            }
             return (data || []).map(mapCheckoutFromDB);
         },
         enabled: !!patronId,
@@ -81,7 +84,10 @@ export function useActiveCheckouts() {
                 .in('status', ['active', 'overdue'])
                 .order('due_date', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error fetching active checkouts:", error);
+                throw error;
+            }
             return (data || []).map(mapCheckoutFromDB);
         },
     });
@@ -106,7 +112,10 @@ export function useRenewLoan() {
                 })
                 .eq('id', checkout.id);
 
-            if (error) throw error;
+            if (error) {
+                console.error(`Supabase error renewing checkout ${checkout.id}:`, error);
+                throw error;
+            }
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["checkouts", "patron", variables.patronId] });
