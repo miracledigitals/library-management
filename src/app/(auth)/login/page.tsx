@@ -146,18 +146,24 @@ export default function LoginPage() {
                             {isRegistering && (
                                 <div className="space-y-2">
                                     <Label htmlFor="role">Account Type</Label>
-                                    <Select
-                                        value={role}
-                                        onValueChange={(value: "patron" | "admin") => setRole(value)}
-                                    >
-                                        <SelectTrigger className="h-11">
-                                            <SelectValue placeholder="Select account type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="patron">Library Patron</SelectItem>
-                                            <SelectItem value="admin">Administrator</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-4">
+                                        <Button
+                                            type="button"
+                                            variant={role === "patron" ? "default" : "outline"}
+                                            className="flex-1 h-11"
+                                            onClick={() => setRole("patron")}
+                                        >
+                                            Patron
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={role === "admin" ? "default" : "outline"}
+                                            className="flex-1 h-11"
+                                            onClick={() => setRole("admin")}
+                                        >
+                                            Admin
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                             <div className="space-y-2">
