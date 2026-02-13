@@ -6,6 +6,7 @@ RETURNS TRIGGER AS $$
 DECLARE
   user_role TEXT;
   member_id TEXT;
+  staff_id TEXT;
 BEGIN
   -- Determine user role from metadata
   user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'patron');
@@ -38,6 +39,23 @@ BEGIN
       COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 2), ''),
       'active',
       'standard'
+    );
+  END IF;
+
+  IF user_role IN ('admin', 'librarian') THEN
+    staff_id := 'ST' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') || LPAD(CAST(FLOOR(RANDOM() * 1000) AS TEXT), 3, '0');
+    INSERT INTO public.staff (
+      id,
+      staff_id,
+      email,
+      first_name,
+      last_name
+    ) VALUES (
+      NEW.id,
+      staff_id,
+      NEW.email,
+      COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 1), ''),
+      COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 2), '')
     );
   END IF;
   

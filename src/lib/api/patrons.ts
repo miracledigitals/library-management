@@ -176,11 +176,30 @@ export function useCreatePatron() {
                 body: JSON.stringify(dbData)
             });
 
-            const data = await response.json();
+            const responseText = await response.text();
+            let data: PatronRow | { error?: string } | null = null;
+            if (responseText) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch {
+                    data = null;
+                }
+            }
+
+            const errorMessage =
+                data && typeof data === "object" && "error" in data ? data.error : undefined;
 
             if (!response.ok) {
-                console.error("API error creating patron:", data);
-                throw new Error(data.error || "Failed to create patron");
+                console.error("API error creating patron:", {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: data ?? responseText
+                });
+                throw new Error(errorMessage || `Failed to create patron (status ${response.status})`);
+            }
+
+            if (!data || typeof data !== "object" || !("id" in data)) {
+                throw new Error("Failed to create patron (invalid response)");
             }
 
             return mapPatronFromDB(data);

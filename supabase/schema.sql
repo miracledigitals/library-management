@@ -52,6 +52,19 @@ CREATE TABLE IF NOT EXISTS patrons (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS staff (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  staff_id TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  phone TEXT,
+  department TEXT,
+  title TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE OR REPLACE FUNCTION normalize_patron_email()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -63,6 +76,18 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER patrons_normalize_email
 BEFORE INSERT OR UPDATE ON patrons
 FOR EACH ROW EXECUTE FUNCTION normalize_patron_email();
+
+CREATE OR REPLACE FUNCTION normalize_staff_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.email = lower(trim(NEW.email));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER staff_normalize_email
+BEFORE INSERT OR UPDATE ON staff
+FOR EACH ROW EXECUTE FUNCTION normalize_staff_email();
 
 -- Create checkouts table
 CREATE TABLE IF NOT EXISTS checkouts (
@@ -154,6 +179,10 @@ CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (i
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
   lower(trim(email)) = lower(trim(auth.jwt() ->> 'email'))
 );
+
+ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/Librarians can manage staff" ON staff FOR ALL USING (is_librarian_or_admin());
+CREATE POLICY "Staff can read their own staff record" ON staff FOR SELECT USING (auth.uid() = id);
 
 -- Checkouts: Admins/Librarians manage all, patrons read their own
 ALTER TABLE checkouts ENABLE ROW LEVEL SECURITY;
@@ -345,6 +374,7 @@ RETURNS TRIGGER AS $$
 DECLARE
   user_role TEXT;
   member_id TEXT;
+  staff_id TEXT;
 BEGIN
   -- Determine user role from metadata
   user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'patron');
@@ -377,6 +407,23 @@ BEGIN
       COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 2), ''),
       'active',
       'standard'
+    );
+  END IF;
+
+  IF user_role IN ('admin', 'librarian') THEN
+    staff_id := 'ST' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') || LPAD(CAST(FLOOR(RANDOM() * 1000) AS TEXT), 3, '0');
+    INSERT INTO public.staff (
+      id,
+      staff_id,
+      email,
+      first_name,
+      last_name
+    ) VALUES (
+      NEW.id,
+      staff_id,
+      NEW.email,
+      COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 1), ''),
+      COALESCE(split_part(NEW.raw_user_meta_data->>'full_name', ' ', 2), '')
     );
   END IF;
   

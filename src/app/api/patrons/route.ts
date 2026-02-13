@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
 
 export async function POST(request: Request) {
     try {
@@ -26,15 +25,18 @@ export async function POST(request: Request) {
         });
 
         // Verify the user is authenticated using the token from the request headers
-        const headersList = await headers();
-        const authorization = headersList.get("authorization");
+        const authorization = request.headers.get("authorization");
         
         if (!authorization) {
             return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
         }
 
         // Extract token from "Bearer <token>"
-        const token = authorization.replace('Bearer ', '').trim();
+        if (!authorization.toLowerCase().startsWith("bearer ")) {
+            return NextResponse.json({ error: "Unauthorized: Invalid auth header" }, { status: 401 });
+        }
+
+        const token = authorization.slice(7).trim();
         
         // Use the admin client to verify the user token
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
