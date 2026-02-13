@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/layout/Sidebar";
 
 export function TopBar() {
@@ -39,6 +39,7 @@ export function TopBar() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0">
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <Sidebar className="w-full border-r-0" onNavigate={() => setMobileNavOpen(false)} />
                     </SheetContent>
                 </Sheet>

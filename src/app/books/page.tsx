@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useBooks } from "@/lib/api/books";
+import { useQueryClient } from "@tanstack/react-query";
 import {
     Table,
     TableBody,
@@ -28,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDeleteBook } from "@/lib/api/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateBorrowRequest, usePatronRequests } from "@/lib/api/requests";
-import { usePatronByEmail } from "@/lib/api/patrons";
+import { usePatronByEmail, useCreatePatron } from "@/lib/api/patrons";
 import { Loader2, BookCheck, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -40,9 +41,10 @@ export default function BooksPage() {
     const [genre, setGenre] = useState("All");
     const [status, setStatus] = useState("All");
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+    const [viewMode, setViewMode] = useState<"table" | "grid">("table");
     const [selectedBookForModal, setSelectedBookForModal] = useState<BookType | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const queryClient = useQueryClient();
 
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
@@ -50,6 +52,7 @@ export default function BooksPage() {
     console.log("Debug: profile email:", profile?.email, "user email:", user?.email, "patronEmail:", patronEmail);
     const { data: patron } = usePatronByEmail(patronEmail);
     console.log("Debug: patron lookup result:", patron, "for email:", patronEmail);
+    const createPatron = useCreatePatron();
     const { data: myRequests } = usePatronRequests(patron?.id || "");
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
@@ -91,13 +94,64 @@ export default function BooksPage() {
         }
     };
 
-    const handleRequestBorrow = (book: BookType) => {
+    const handleRequestBorrow = async (book: BookType) => {
         console.log("Debug: Opening borrow modal for book:", book.title, "patron:", patron);
-        if (!patron?.id) {
-            console.error("Debug: Cannot open borrow modal - patron not found");
+        console.log("Debug: Current profile:", profile);
+        
+        let currentPatron = patron;
+        
+        if (!currentPatron?.id && profile?.email) {
+            // Auto-create patron record if it doesn't exist
+            console.log("Debug: No patron found, attempting to create one...");
+            try {
+                const patronData = {
+                    memberId: `MB${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    email: profile.email,
+                    firstName: profile.displayName?.split(' ')[0] || '',
+                    lastName: profile.displayName?.split(' ').slice(1).join(' ') || '',
+                    phone: '',
+                    address: {
+                        street: '',
+                        city: '',
+                        zipCode: ''
+                    },
+                    membershipStatus: 'active',
+                    membershipType: 'standard',
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+                    maxBooksAllowed: 5,
+                    currentCheckouts: 0,
+                    totalCheckoutsHistory: 0,
+                    finesDue: 0,
+                    notes: ''
+                };
+                console.log("Debug: Creating patron with data:", patronData);
+                
+                const newPatron = await createPatron.mutateAsync(patronData);
+                console.log("Debug: Created patron record:", newPatron);
+                toast.success("Patron record created successfully!");
+                currentPatron = newPatron; // Use the newly created patron
+                
+                // Force refetch of patron data
+                queryClient.invalidateQueries({ queryKey: ["patrons", "email", patronEmail] });
+                
+                // Wait a moment for the data to sync
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (error) {
+                console.error("Debug: Failed to create patron record:", error);
+                console.error("Debug: Error details:", JSON.stringify(error, null, 2));
+                toast.error(`Failed to create patron record: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                return;
+            }
+        }
+        
+        // Check again after potential creation
+        if (!currentPatron?.id) {
+            console.error("Debug: Cannot open borrow modal - patron still not found");
             toast.error("Patron profile not found. Please complete your patron registration.");
             return;
         }
+        
+        console.log("Debug: Proceeding with patron:", currentPatron);
         setSelectedBookForModal(book);
         setIsModalOpen(true);
     };
