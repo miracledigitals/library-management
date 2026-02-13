@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         const authorization = headersList.get("authorization");
         
         if (!authorization) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
         }
 
         // We create a client with the user's token just to verify the user
@@ -39,11 +39,13 @@ export async function POST(request: Request) {
              global: { headers: { Authorization: authorization } }
         });
 
-        const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser();
+        // Extract token from "Bearer <token>"
+        const token = authorization.replace('Bearer ', '').trim();
+        const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser(token);
 
         if (authError || !user) {
             console.error("Auth error:", authError);
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ error: `Unauthorized: ${authError?.message || 'Invalid token'}` }, { status: 401 });
         }
 
         // Verify that the user is creating a patron for themselves
