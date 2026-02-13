@@ -57,7 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!isMounted.current) return;
 
             if (error) {
-                console.error("Error refreshing profile from database:", error);
+                // Supabase errors often have non-enumerable properties like message, code, etc.
+                // If message is missing, we check for other common properties.
+                const errorMessage = error.message || error.code || (error.details ? `Details: ${error.details}` : null);
+                
+                if (errorMessage) {
+                    console.error("Error refreshing profile from database:", errorMessage);
+                } else if (typeof error === 'object' && Object.keys(error).length > 0) {
+                    console.error("Error refreshing profile from database (object):", error);
+                }
             }
 
             if (data && !error) {
@@ -69,6 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     role: data.role,
                     currentCheckouts: data.current_checkouts,
                     finesDue: parseFloat(data.fines_due),
+                });
+            } else if (!data && !error && user) {
+                // If profile not found in DB during refresh, ensure we still have a fallback
+                // This keeps the UI working if the trigger is slow
+                const supabaseUser = user as User;
+                const metadataRole = supabaseUser.user_metadata?.role || "patron";
+                
+                setProfile({
+                    id: supabaseUser.id,
+                    email: supabaseUser.email || "",
+                    displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
+                    role: metadataRole,
                 });
             }
         } catch (err) {
@@ -157,7 +177,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
 
                 if (error) {
-                    console.error("Error fetching profile from database:", error);
+                    const errorMessage = error.message || error.code || (error.details ? `Details: ${error.details}` : null);
+                    if (errorMessage) {
+                        console.error("Error fetching profile from database:", errorMessage);
+                    } else if (typeof error === 'object' && Object.keys(error).length > 0) {
+                        console.error("Error fetching profile from database (object):", error);
+                    }
                 }
 
                 if (data && !error) {
