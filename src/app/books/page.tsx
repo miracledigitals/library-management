@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useBooks } from "@/lib/api/books";
 import { useQueryClient } from "@tanstack/react-query";
+import type { MembershipType, MembershipStatus } from "@/types";
 import {
     Table,
     TableBody,
@@ -115,8 +116,8 @@ export default function BooksPage() {
                         city: '',
                         zipCode: ''
                     },
-                    membershipStatus: 'active',
-                    membershipType: 'standard',
+                    membershipStatus: 'active' as MembershipStatus,
+                    membershipType: 'standard' as MembershipType,
                     expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
                     maxBooksAllowed: 5,
                     currentCheckouts: 0,
@@ -236,17 +237,17 @@ export default function BooksPage() {
                             <LayoutGrid className="h-4 w-4" />
                         </Button>
                         <Button
-                            variant={viewMode === "list" ? "secondary" : "ghost"}
+                            variant={viewMode === "table" ? "secondary" : "ghost"}
                             size="sm"
                             className="rounded-l-none flex-1 sm:flex-none"
-                            onClick={() => setViewMode("list")}
+                            onClick={() => setViewMode("table")}
                         >
                             <ListIcon className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
 
-                {viewMode === "list" ? (
+                {viewMode === "table" ? (
                     <div className="rounded-md border bg-card">
                         <Table>
                             <TableHeader>
