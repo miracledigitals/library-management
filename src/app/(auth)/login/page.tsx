@@ -23,17 +23,21 @@ export default function LoginPage() {
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState<"patron" | "admin">("patron");
     const [loading, setLoading] = useState(false);
-    const { user, loading: authLoading, login, register, loginWithGoogle } = useAuth();
+    const { user, profile, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
     const lastRedirectTo = useRef<string | null>(null);
 
     useEffect(() => {
-        if (authLoading || !user) return;
+        // Only redirect if auth has finished loading and we have a user AND profile
+        if (authLoading || !user || !profile) return;
+        
         const target = "/dashboard";
         if (lastRedirectTo.current === target) return;
         lastRedirectTo.current = target;
+        
+        console.log(`Redirecting to ${target} for user ${user.id}`);
         router.replace(target);
-    }, [user, authLoading, router]);
+    }, [user, profile, authLoading, router]);
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,8 +50,7 @@ export default function LoginPage() {
             } else {
                 await login(email, password);
                 toast.success("Logged in successfully");
-                // Explicitly push to dashboard to ensure transition on mobile (Force Save)
-                router.push("/dashboard");
+                // The useEffect will handle the redirect once the state updates
             }
         } catch (error: unknown) {
             const message =
@@ -60,15 +63,20 @@ export default function LoginPage() {
         }
     };
 
-    if (authLoading) {
+    if (authLoading || (user && !profile)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-background">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-sm text-muted-foreground">
+                        {user ? "Setting up your session..." : "Loading LMS Pro..."}
+                    </p>
+                </div>
             </div>
         );
     }
 
-    if (user) return null;
+    if (user && profile) return null;
 
     const handleGoogleLogin = async () => {
         try {

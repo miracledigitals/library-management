@@ -32,7 +32,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         );
     }
 
-    if (!user || !profile) return null;
+    if (!user) return null;
+    
+    if (!profile) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-sm text-muted-foreground">Finalizing your session...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (allowedRoles && !allowedRoles.includes(profile.role)) return null;
 
     return <>{children}</>;

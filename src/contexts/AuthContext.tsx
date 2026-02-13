@@ -134,91 +134,104 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
             return;
         }
+    }, []);
 
-        const handleUserChange = async (supabaseUser: User | null) => {
-            if (!isMounted.current) return;
+    const handleUserChange = useCallback(async (supabaseUser: User | null) => {
+        if (!isMounted.current) return;
 
-            if (!supabaseUser) {
-                setUser(null);
-                setProfile(null);
-                lastUserId.current = null;
+        if (!supabaseUser) {
+            setUser(null);
+            setProfile(null);
+            lastUserId.current = null;
+            fetchingProfileFor.current = null;
+            setLoading(false);
+            return;
+        }
+
+        // Avoid redundant fetches if the user ID hasn't changed or is already being fetched
+        if (supabaseUser.id === lastUserId.current && profileRef.current) {
+            setLoading(false);
+            return;
+        }
+
+        if (fetchingProfileFor.current === supabaseUser.id) {
+            return;
+        }
+
+        fetchingProfileFor.current = supabaseUser.id;
+        lastUserId.current = supabaseUser.id;
+        
+        // Only set loading if we don't already have a profile for this user
+        if (!profileRef.current || profileRef.current.id !== supabaseUser.id) {
+            setLoading(true);
+        }
+
+        try {
+            // Fetch user profile from PostgreSQL
+            console.log(`Fetching profile for user ID: ${supabaseUser.id}`);
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', supabaseUser.id)
+                .maybeSingle();
+
+            if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
+
+            if (error) {
+                const errorMessage = error.message || error.code || (error.details ? `Details: ${error.details}` : null);
+                if (errorMessage) {
+                    console.error("Error fetching profile from database:", errorMessage);
+                } else if (typeof error === 'object' && Object.keys(error).length > 0) {
+                    console.error("Error fetching profile from database (object):", error);
+                }
+            }
+
+            if (data && !error) {
+                console.log("Profile found in database:", data);
+                setUser(supabaseUser);
+                setProfile({
+                    id: data.id,
+                    email: data.email,
+                    displayName: data.display_name,
+                    role: data.role,
+                    currentCheckouts: data.current_checkouts,
+                    finesDue: parseFloat(data.fines_due),
+                });
+            } else {
+                // Fallback to metadata if profile not found in database
+                // This ensures the user isn't locked out if the database trigger is slow or fails
+                const metadataRole = supabaseUser.user_metadata?.role || "patron";
+                console.warn(`Profile not found in DB for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
+                
+                setUser(supabaseUser);
+                setProfile({
+                    id: supabaseUser.id,
+                    email: supabaseUser.email || "",
+                    displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
+                    role: metadataRole,
+                });
+            }
+        } catch (err) {
+            console.error("Error in handleUserChange:", err);
+        } finally {
+            if (isMounted.current && fetchingProfileFor.current === supabaseUser.id) {
+                setLoading(false);
                 fetchingProfileFor.current = null;
-                setLoading(false);
-                return;
             }
+        }
+    }, []);
 
-            // Avoid redundant fetches if the user ID hasn't changed or is already being fetched
-            if (supabaseUser.id === lastUserId.current && profileRef.current) {
-                setLoading(false);
-                return;
+    useEffect(() => {
+        if (!isSupabaseConfigured) {
+            if (!hasShownConfigError.current) {
+                toast.error("Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+                hasShownConfigError.current = true;
             }
-
-            if (fetchingProfileFor.current === supabaseUser.id) {
-                return;
-            }
-
-            fetchingProfileFor.current = supabaseUser.id;
-            lastUserId.current = supabaseUser.id;
-            
-            // Only set loading if we don't already have a profile for this user
-            if (!profileRef.current || profileRef.current.id !== supabaseUser.id) {
-                setLoading(true);
-            }
-
-            try {
-                // Fetch user profile from PostgreSQL
-                console.log(`Fetching profile for user ID: ${supabaseUser.id}`);
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', supabaseUser.id)
-                    .maybeSingle();
-
-                if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
-
-                if (error) {
-                    const errorMessage = error.message || error.code || (error.details ? `Details: ${error.details}` : null);
-                    if (errorMessage) {
-                        console.error("Error fetching profile from database:", errorMessage);
-                    } else if (typeof error === 'object' && Object.keys(error).length > 0) {
-                        console.error("Error fetching profile from database (object):", error);
-                    }
-                }
-
-                if (data && !error) {
-                    console.log("Profile found in database:", data);
-                    setUser(supabaseUser);
-                    setProfile({
-                        id: data.id,
-                        email: data.email,
-                        displayName: data.display_name,
-                        role: data.role,
-                        currentCheckouts: data.current_checkouts,
-                        finesDue: parseFloat(data.fines_due),
-                    });
-                } else {
-                    // Fallback to metadata if profile not found in database
-                    // This ensures the user isn't locked out if the database trigger is slow or fails
-                    const metadataRole = supabaseUser.user_metadata?.role || "patron";
-                    console.warn(`Profile not found in DB for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
-                    
-                    setUser(supabaseUser);
-                    setProfile({
-                        id: supabaseUser.id,
-                        email: supabaseUser.email || "",
-                        displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || "",
-                        role: metadataRole,
-                    });
-                }
-            } catch (err) {
-                console.error("Error in handleUserChange:", err);
-            } finally {
-                if (isMounted.current && fetchingProfileFor.current === supabaseUser.id) {
-                    setLoading(false);
-                    fetchingProfileFor.current = null;
-                }
-            }
-        };
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            return;
+        }
 
         // Safety timeout to prevent stuck loading
         const safetyTimeout = setTimeout(() => {
@@ -254,14 +267,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearTimeout(safetyTimeout);
             subscription.unsubscribe();
         };
-    }, []);
+    }, [handleUserChange]);
 
     const login = async (email: string, password: string) => {
         if (!isSupabaseConfigured) {
             throw new Error("Supabase is not configured. Please set environment variables.");
         }
         
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
             if (error.message.includes("Invalid login credentials")) {
                 // If login fails, check if the email actually exists in our profiles to give a better error message
@@ -277,6 +290,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             throw error;
         }
+
+        // Proactively update user/profile to avoid waiting for onAuthStateChange
+        if (data.user) {
+            await handleUserChange(data.user);
+        }
     };
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
@@ -290,7 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isBootstrapAdmin = !!(adminEmail && email.toLowerCase() === adminEmail.toLowerCase());
         const targetRole = isBootstrapAdmin ? "admin" : role;
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -302,6 +320,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (error) throw error;
+
+        // Proactively update user/profile to avoid waiting for onAuthStateChange
+        if (data.user) {
+            await handleUserChange(data.user);
+        }
     };
 
     const loginWithGoogle = async () => {
