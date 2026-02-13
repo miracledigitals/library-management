@@ -33,15 +33,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
         }
 
-        // We create a client with the user's token just to verify the user
-        // Note: Using the anon key is fine here because we just want to verify the token
-        const supabaseUserClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-             global: { headers: { Authorization: authorization } }
-        });
-
         // Extract token from "Bearer <token>"
         const token = authorization.replace('Bearer ', '').trim();
-        const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser(token);
+        
+        // Use the admin client to verify the user token
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
         if (authError || !user) {
             console.error("Auth error:", authError);
