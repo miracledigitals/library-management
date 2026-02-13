@@ -27,11 +27,14 @@ const navItems = [
 
 export function Sidebar({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
     const pathname = usePathname();
-    const { profile } = useAuth();
+    const { profile, user, isAdmin } = useAuth();
 
     const filteredItems = navItems.filter(item =>
         profile && item.roles.includes(profile.role)
     );
+    console.log('user profile', profile )
+    console.log('user: ', user )
+    console.log('Admin Status ', isAdmin )
 
     return (
         <div className={cn("flex h-full w-full lg:w-64 flex-col border-r bg-card text-card-foreground", className)}>
