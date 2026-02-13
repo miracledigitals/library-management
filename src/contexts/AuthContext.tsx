@@ -224,19 +224,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error("Supabase is not configured. Please set environment variables.");
         }
         
-        // Ensure email is registered before allowing login
-        const { data: profileCheck, error: profileError } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('email', email)
-            .maybeSingle();
-
-        if (profileError || !profileCheck) {
-            throw new Error("This email is not registered. Please sign up first.");
-        }
-
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+            if (error.message.includes("Invalid login credentials")) {
+                // If login fails, check if the email actually exists in our profiles to give a better error message
+                const { data: profileCheck } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('email', email)
+                    .maybeSingle();
+                
+                if (!profileCheck) {
+                    throw new Error("This email is not registered. Please sign up first.");
+                }
+            }
+            throw error;
+        }
     };
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
