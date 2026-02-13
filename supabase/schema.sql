@@ -319,7 +319,7 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'display_name', ''),
-    'patron'
+    COALESCE(NEW.raw_user_meta_data->>'role', 'patron')
   );
   RETURN NEW;
 END;

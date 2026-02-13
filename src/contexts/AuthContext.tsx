@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user?.id || !isSupabaseConfigured) return;
         
         try {
+            console.log(`Refreshing profile for user ID: ${user.id}`);
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -55,7 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (!isMounted.current) return;
 
+            if (error) {
+                console.error("Error refreshing profile from database:", error);
+            }
+
             if (data && !error) {
+                console.log("Profile refreshed from database:", data);
                 setProfile({
                     id: data.id,
                     email: data.email,
@@ -141,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             try {
                 // Fetch user profile from PostgreSQL
-                // Use maybeSingle to handle cases where there might be 0 or >1 records during development
+                console.log(`Fetching profile for user ID: ${supabaseUser.id}`);
                 const { data, error } = await supabase
                     .from('profiles')
                     .select('*')
@@ -150,7 +156,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 if (!isMounted.current || fetchingProfileFor.current !== supabaseUser.id) return;
 
+                if (error) {
+                    console.error("Error fetching profile from database:", error);
+                }
+
                 if (data && !error) {
+                    console.log("Profile found in database:", data);
                     setUser(supabaseUser);
                     setProfile({
                         id: data.id,
@@ -163,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 } else {
                     // Fallback to metadata if profile not found or fetch failed
                     const metadataRole = supabaseUser.user_metadata?.role || "patron";
-                    console.log(`Profile fetch failed or empty for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}`);
+                    console.warn(`Profile not found in DB or fetch failed for ${supabaseUser.id}. Falling back to metadata role: ${metadataRole}. Error: ${error?.message || 'none'}`);
                     
                     setUser(supabaseUser);
                     setProfile({
@@ -248,8 +259,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Allow registration as admin if email matches the bootstrap email
+        // Otherwise, default to the requested role but we should probably restrict this in production
         const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_BOOTSTRAP_EMAIL;
-        const targetRole = (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) ? "admin" : role;
+        const isBootstrapAdmin = !!(adminEmail && email.toLowerCase() === adminEmail.toLowerCase());
+        const targetRole = isBootstrapAdmin ? "admin" : role;
 
         const { error } = await supabase.auth.signUp({
             email,
