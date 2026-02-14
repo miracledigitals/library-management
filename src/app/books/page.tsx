@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useBooks } from "@/lib/api/books";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,9 +51,7 @@ export default function BooksPage() {
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
     const patronEmail = profile?.email || user?.email || "";
-    console.log("Debug: profile email:", profile?.email, "user email:", user?.email, "patronEmail:", patronEmail);
     const { data: patron } = usePatronByEmail(patronEmail);
-    console.log("Debug: patron lookup result:", patron, "for email:", patronEmail);
     const { data: myRequests } = usePatronRequests(patron?.id || "");
     const { data: myReturnRequests } = usePatronReturnRequests(patron?.id || "");
     const { data: patronCheckouts } = usePatronCheckouts(patron?.id);
@@ -63,6 +61,19 @@ export default function BooksPage() {
 
     const isPatron = profile?.role === "patron";
     const canBulkDelete = profile?.role === "admin";
+
+    useEffect(() => {
+        const media = window.matchMedia("(max-width: 640px)");
+        const applyPreference = (matches: boolean) => {
+            if (matches) {
+                setViewMode("grid");
+            }
+        };
+        applyPreference(media.matches);
+        const handler = (event: MediaQueryListEvent) => applyPreference(event.matches);
+        media.addEventListener("change", handler);
+        return () => media.removeEventListener("change", handler);
+    }, []);
 
     const resetFilters = () => {
         setSearch("");
@@ -201,7 +212,7 @@ export default function BooksPage() {
                         Reset
                     </Button>
 
-                    <div className="flex border rounded-md w-full sm:w-auto sm:ml-auto">
+                    <div className="hidden sm:flex border rounded-md w-full sm:w-auto sm:ml-auto">
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
@@ -355,13 +366,15 @@ export default function BooksPage() {
                             </div>
                         ) : (
                             books?.map((book) => (
-                                <Card key={book.id || `card-${book.isbn}`} className="overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+                                <Card key={book.id || `card-${book.isbn}`} className="overflow-hidden flex flex-col group transition-shadow sm:hover:shadow-md">
                                     <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                                         {book.coverImage ? (
                                             <img
                                                 src={book.coverImage}
                                                 alt={book.title}
-                                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                                loading="lazy"
+                                                decoding="async"
+                                                className="object-cover w-full h-full transition-transform duration-300 sm:group-hover:scale-105"
                                             />
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-muted-foreground italic text-xs p-4 text-center">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 
 interface ProtectedRouteProps {
@@ -12,17 +12,22 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     const { user, profile, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                router.replace("/login");
+                if (pathname !== "/login") {
+                    router.replace("/login");
+                }
             } else if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
                 // Redirect to dashboard if they don't have the right role
-                router.replace("/dashboard");
+                if (pathname !== "/dashboard") {
+                    router.replace("/dashboard");
+                }
             }
         }
-    }, [user, profile, loading, router, allowedRoles]);
+    }, [user, profile, loading, router, allowedRoles, pathname]);
 
     if (loading) {
         return (

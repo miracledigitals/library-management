@@ -103,13 +103,15 @@ function LoanCard({
     };
 
     return (
-        <Card className={`h-full flex flex-col overflow-hidden transition-all hover:shadow-md ${isOverdue ? 'border-rose-200' : ''}`}>
+        <Card className={`h-full flex flex-col overflow-hidden transition-shadow sm:hover:shadow-md ${isOverdue ? 'border-rose-200' : ''}`}>
             <CardHeader className="p-0 border-b relative">
                 <div className="h-32 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
                     {book?.coverImage ? (
                         <img
                             src={book.coverImage}
                             alt={loan.bookTitle}
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover opacity-80"
                         />
                     ) : (
