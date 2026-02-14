@@ -7,7 +7,8 @@ import {
     RotateCcw,
     UserPlus,
     AlertTriangle,
-    Info
+    Info,
+    Bell
 } from "lucide-react";
 
 export function RecentActivity({ userId }: { userId?: string }) {
@@ -41,6 +42,13 @@ export function RecentActivity({ userId }: { userId?: string }) {
         switch (type) {
             case "checkout": return <BookOpen className="h-5 w-5 text-blue-500" />;
             case "return": return <RotateCcw className="h-5 w-5 text-emerald-500" />;
+            case "borrow_request": return <BookOpen className="h-5 w-5 text-indigo-500" />;
+            case "request_approved": return <BookOpen className="h-5 w-5 text-emerald-500" />;
+            case "request_denied": return <BookOpen className="h-5 w-5 text-rose-500" />;
+            case "return_request": return <RotateCcw className="h-5 w-5 text-indigo-500" />;
+            case "return_approved": return <RotateCcw className="h-5 w-5 text-emerald-500" />;
+            case "return_denied": return <RotateCcw className="h-5 w-5 text-rose-500" />;
+            case "due_soon": return <Bell className="h-5 w-5 text-amber-500" />;
             case "register": return <UserPlus className="h-5 w-5 text-indigo-500" />;
             case "fine": return <AlertTriangle className="h-5 w-5 text-amber-500" />;
             default: return <Info className="h-5 w-5 text-muted-foreground" />;

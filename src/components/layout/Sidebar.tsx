@@ -28,6 +28,32 @@ const navItems = [
 export function Sidebar({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
     const pathname = usePathname();
     const { profile } = useAuth();
+    const language = profile?.language || "English";
+
+    const translations: Record<string, Record<string, string>> = {
+        English: {
+            Dashboard: "Dashboard",
+            Books: "Books",
+            Checkout: "Checkout",
+            Returns: "Returns",
+            Requests: "Requests",
+            "Admin Onboarding": "Admin Onboarding",
+            Reports: "Reports",
+            Settings: "Settings"
+        },
+        Yoruba: {
+            Dashboard: "Dasibodu",
+            Books: "Ìwé",
+            Checkout: "Ṣàyẹwo-jade",
+            Returns: "Ìpadà",
+            Requests: "Ìbéèrè",
+            "Admin Onboarding": "Ìforúkọsílẹ̀ Alákóso",
+            Reports: "Ìròyìn",
+            Settings: "Eto"
+        }
+    };
+
+    const t = (label: string) => translations[language]?.[label] || translations.English[label] || label;
 
     const filteredItems = navItems.filter(item =>
         profile && item.roles.includes(profile.role)
@@ -57,7 +83,7 @@ export function Sidebar({ className, onNavigate }: { className?: string; onNavig
                             )}
                         >
                             <item.icon className="h-5 w-5" />
-                            {item.name}
+                            {t(item.name)}
                         </Link>
                     );
                 })}
@@ -72,7 +98,7 @@ export function Sidebar({ className, onNavigate }: { className?: string; onNavig
                     )}
                 >
                     <Settings className="h-5 w-5" />
-                    Settings
+                    {t("Settings")}
                 </Link>
             </div>
         </div>

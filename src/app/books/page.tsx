@@ -311,9 +311,6 @@ export default function BooksPage() {
                                                                 );
                                                             }
                                                             const existingRequest = myRequests?.find(r => r.bookId === book.id && r.status === "pending");
-                                                            const isApproved = myRequests?.find(r => r.bookId === book.id && r.status === "approved");
-
-                                                            if (isApproved) return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">Approved</Badge>;
                                                             if (existingRequest) return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">Pending</Badge>;
 
                                                             return (
@@ -416,9 +413,6 @@ export default function BooksPage() {
                                                     );
                                                 }
                                                 const existingRequest = myRequests?.find(r => r.bookId === book.id && r.status === "pending");
-                                                const isApproved = myRequests?.find(r => r.bookId === book.id && r.status === "approved");
-
-                                                if (isApproved) return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 py-1.5 h-9 grow">Approved</Badge>;
                                                 if (existingRequest) return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 py-1.5 h-9 grow">Pending</Badge>;
 
                                                 return (

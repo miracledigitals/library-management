@@ -29,12 +29,15 @@ import {
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function BookDetailPage() {
     const { id } = useParams();
     const router = useRouter();
     const { data: book, isLoading } = useBook(id as string);
     const deleteBook = useDeleteBook();
+    const { profile } = useAuth();
+    const canManageBooks = profile?.role === "admin" || profile?.role === "librarian";
 
     const handleDelete = async () => {
         try {
@@ -75,35 +78,37 @@ export default function BookDetailPage() {
                     <Button variant="ghost" onClick={() => router.push("/books")} className="gap-2 w-full sm:w-auto">
                         <ArrowLeft className="h-4 w-4" /> Back to List
                     </Button>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <Link href={`/books/${id}/edit`} className="w-full sm:w-auto">
-                            <Button variant="outline" className="gap-2 w-full sm:w-auto">
-                                <Edit className="h-4 w-4" /> Edit
-                            </Button>
-                        </Link>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="gap-2 w-full sm:w-auto">
-                                    <Trash2 className="h-4 w-4" /> Delete
+                    {canManageBooks && (
+                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                            <Link href={`/books/${id}/edit`} className="w-full sm:w-auto">
+                                <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                                    <Edit className="h-4 w-4" /> Edit
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the book
-                                        &quot;{book.title}&quot; from the library database.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-                                        Delete Book
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
+                            </Link>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="gap-2 w-full sm:w-auto">
+                                        <Trash2 className="h-4 w-4" /> Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the book
+                                            &quot;{book.title}&quot; from the library database.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                                            Delete Book
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">

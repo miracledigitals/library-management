@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     role: data.role,
                     currentCheckouts: data.current_checkouts,
                     finesDue: parseFloat(data.fines_due),
+                    language: data.language,
                 });
             } else if (!data && !error && user) {
                 // If profile not found in DB during refresh, ensure we still have a fallback
@@ -196,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     role: data.role,
                     currentCheckouts: data.current_checkouts,
                     finesDue: parseFloat(data.fines_due),
+                    language: data.language,
                 });
             } else {
                 // Fallback to metadata if profile not found in database

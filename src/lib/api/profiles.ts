@@ -5,12 +5,12 @@ export function useUpdateProfile() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, displayName }: { id: string; displayName: string }) => {
+        mutationFn: async ({ id, displayName, language }: { id: string; displayName: string; language?: string }) => {
             assertSupabaseConfigured();
 
             const { error } = await supabase
                 .from('profiles')
-                .update({ display_name: displayName, updated_at: new Date().toISOString() })
+                .update({ display_name: displayName, language, updated_at: new Date().toISOString() })
                 .eq('id', id);
 
             if (error) throw error;

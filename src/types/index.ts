@@ -2,7 +2,20 @@ export type MembershipType = 'standard' | 'premium' | 'student';
 export type MembershipStatus = 'active' | 'suspended' | 'expired';
 export type BookStatus = 'available' | 'low_stock' | 'unavailable';
 export type CheckoutStatus = 'active' | 'returned' | 'overdue' | 'lost';
-export type ActivityType = 'checkout' | 'return' | 'renew' | 'fine_paid' | 'patron_added' | 'book_added' | 'borrow_request' | 'request_approved' | 'request_denied';
+export type ActivityType =
+    | 'checkout'
+    | 'return'
+    | 'renew'
+    | 'fine_paid'
+    | 'patron_added'
+    | 'book_added'
+    | 'borrow_request'
+    | 'request_approved'
+    | 'request_denied'
+    | 'return_request'
+    | 'return_approved'
+    | 'return_denied'
+    | 'due_soon';
 
 export interface Book {
     id?: string;
@@ -110,4 +123,5 @@ export interface UserProfile {
     displayName?: string;
     currentCheckouts?: number;
     finesDue?: number;
+    language?: string;
 }

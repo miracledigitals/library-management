@@ -39,10 +39,44 @@ export default function SettingsPage() {
     const [isForcingAdmin, setIsForcingAdmin] = useState(false);
     const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
     const [adminTempPassword, setAdminTempPassword] = useState("");
+    const [language, setLanguage] = useState("English");
+
+    const translations: Record<string, Record<string, string>> = {
+        English: {
+            settings: "Settings",
+            settingsSubtitle: "Manage your account preferences and application configuration.",
+            notifications: "Notifications",
+            preferences: "Preferences",
+            preferencesSubtitle: "Customize your application experience.",
+            language: "Language",
+            languageDescription: "Select your preferred language.",
+            save: "Save Changes",
+            cancel: "Cancel"
+        },
+        Yoruba: {
+            settings: "Eto",
+            settingsSubtitle: "Ṣakoso ayanfẹ ìrísí àti ìṣètò ìṣàkóso rẹ.",
+            notifications: "Ìkìlọ̀",
+            preferences: "Àyànfẹ́",
+            preferencesSubtitle: "Ṣàtúnṣe iriri ìṣàkóso rẹ.",
+            language: "Èdè",
+            languageDescription: "Yan èdè tí o fẹ́.",
+            save: "Fi àyípadà pamọ́",
+            cancel: "Fagilé"
+        }
+    };
+
+    const t = (key: string) => translations[language]?.[key] || translations.English[key] || key;
 
     useEffect(() => {
         if (profile?.displayName) {
             setDisplayName(profile.displayName);
+        }
+    }, [profile]);
+
+    useEffect(() => {
+        if (profile?.language) {
+            setLanguage(profile.language);
         }
     }, [profile]);
 
@@ -61,7 +95,8 @@ export default function SettingsPage() {
         try {
             await updateProfile.mutateAsync({
                 id: profile.id,
-                displayName: displayName
+                displayName: displayName,
+                language: language
             });
             await refreshProfile();
             toast.success("Profile updated successfully");
@@ -199,10 +234,8 @@ export default function SettingsPage() {
             <DashboardLayout>
                 <div className="space-y-6 max-w-4xl mx-auto">
                     <div className="text-center sm:text-left">
-                        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                        <p className="text-muted-foreground">
-                            Manage your account preferences and application configuration.
-                        </p>
+                        <h1 className="text-3xl font-bold tracking-tight">{t("settings")}</h1>
+                        <p className="text-muted-foreground">{t("settingsSubtitle")}</p>
                     </div>
 
                     <div className="grid gap-6">
@@ -317,7 +350,7 @@ export default function SettingsPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Bell className="h-5 w-5" /> Notifications
+                                    <Bell className="h-5 w-5" /> {t("notifications")}
                                 </CardTitle>
                                 <CardDescription>Choose what updates you want to receive.</CardDescription>
                             </CardHeader>
@@ -410,9 +443,9 @@ export default function SettingsPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Globe className="h-5 w-5" /> Preferences
+                                    <Globe className="h-5 w-5" /> {t("preferences")}
                                 </CardTitle>
-                                <CardDescription>Customize your application experience.</CardDescription>
+                                <CardDescription>{t("preferencesSubtitle")}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -427,22 +460,27 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="space-y-0.5">
-                                        <Label>Language</Label>
-                                        <p className="text-sm text-muted-foreground">Select your preferred language.</p>
+                                        <Label>{t("language")}</Label>
+                                        <p className="text-sm text-muted-foreground">{t("languageDescription")}</p>
                                     </div>
-                                    <select className="bg-background border rounded px-2 py-1 text-sm">
-                                        <option>English</option>
-                                        <option>Spanish</option>
-                                        <option>French</option>
+                                    <select
+                                        className="bg-background border rounded px-2 py-1 text-sm"
+                                        value={language}
+                                        onChange={(event) => setLanguage(event.target.value)}
+                                    >
+                                        <option value="English">English</option>
+                                        <option value="Spanish">Spanish</option>
+                                        <option value="French">French</option>
+                                        <option value="Yoruba">Yorùbá</option>
                                     </select>
                                 </div>
                             </CardContent>
                         </Card>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                            <Button variant="ghost" className="w-full sm:w-auto">Cancel</Button>
+                            <Button variant="ghost" className="w-full sm:w-auto">{t("cancel")}</Button>
                             <Button onClick={handleSave} disabled={isSaving} className="gap-2 w-full sm:w-auto">
-                                {isSaving ? "Saving..." : <><Save className="h-4 w-4" /> Save Changes</>}
+                                {isSaving ? "Saving..." : <><Save className="h-4 w-4" /> {t("save")}</>}
                             </Button>
                         </div>
                     </div>

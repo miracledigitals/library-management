@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   display_name TEXT,
+  language TEXT DEFAULT 'English',
   role TEXT CHECK (role IN ('admin', 'librarian', 'patron')) DEFAULT 'patron',
   current_checkouts INTEGER DEFAULT 0,
   fines_due DECIMAL(10,2) DEFAULT 0.00,
@@ -213,6 +214,7 @@ ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can read activity logs" ON activity_logs FOR SELECT USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'librarian'))
 );
+CREATE POLICY "Users can read their own activity logs" ON activity_logs FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Authenticated users can insert logs" ON activity_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- RPC for Process Return

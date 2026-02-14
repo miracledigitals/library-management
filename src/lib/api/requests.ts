@@ -27,6 +27,30 @@ type ReturnRequestRow = {
     admin_notes: string | null;
 };
 
+async function getPatronUserIdByPatronId(patronId: string) {
+    const { data: patron, error: patronError } = await supabase
+        .from('patrons')
+        .select('email')
+        .eq('id', patronId)
+        .maybeSingle();
+
+    if (patronError || !patron?.email) {
+        return null;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', patron.email)
+        .maybeSingle();
+
+    if (profileError || !profile?.id) {
+        return null;
+    }
+
+    return profile.id as string;
+}
+
 function mapBorrowRequestFromDB(data: BorrowRequestRow): BorrowRequest {
     return {
         id: data.id,
@@ -171,6 +195,25 @@ export function useCreateBorrowRequest() {
                 console.error("Supabase error creating borrow request:", error);
                 throw error;
             }
+
+            const { data: auth } = await supabase.auth.getUser();
+            if (auth?.user?.id) {
+                await supabase
+                    .from('activity_logs')
+                    .insert([{
+                        type: "borrow_request",
+                        description: `Borrow request submitted for "${request.bookTitle}"`,
+                        user_id: auth.user.id,
+                        target_id: request.bookId,
+                        metadata: {
+                            requestId: data.id,
+                            bookId: request.bookId,
+                            patronId: request.patronId
+                        },
+                        timestamp: new Date().toISOString()
+                    }]);
+            }
+
             return mapBorrowRequestFromDB(data);
         },
         onSuccess: () => {
@@ -201,6 +244,26 @@ export function useCreateReturnRequest() {
                 console.error("Supabase error creating return request:", error);
                 throw error;
             }
+
+            const { data: auth } = await supabase.auth.getUser();
+            if (auth?.user?.id) {
+                await supabase
+                    .from('activity_logs')
+                    .insert([{
+                        type: "return_request",
+                        description: `Return request submitted for "${request.bookTitle}"`,
+                        user_id: auth.user.id,
+                        target_id: request.bookId,
+                        metadata: {
+                            requestId: data.id,
+                            checkoutId: request.checkoutId,
+                            bookId: request.bookId,
+                            patronId: request.patronId
+                        },
+                        timestamp: new Date().toISOString()
+                    }]);
+            }
+
             return mapReturnRequestFromDB(data);
         },
         onSuccess: () => {
@@ -265,6 +328,32 @@ export function useProcessRequest() {
                 console.error(`Supabase error processing request ${requestId}:`, error);
                 throw error;
             }
+
+            const { data: requestDataForLog } = await supabase
+                .from('borrow_requests')
+                .select('*')
+                .eq('id', requestId)
+                .maybeSingle();
+
+            if (requestDataForLog) {
+                const patronUserId = await getPatronUserIdByPatronId(requestDataForLog.patron_id);
+                if (patronUserId) {
+                    await supabase
+                        .from('activity_logs')
+                        .insert([{
+                            type: status === "approved" ? "request_approved" : "request_denied",
+                            description: `Borrow request ${status} for "${requestDataForLog.book_title}"`,
+                            user_id: patronUserId,
+                            target_id: requestDataForLog.book_id,
+                            metadata: {
+                                requestId,
+                                bookId: requestDataForLog.book_id,
+                                patronId: requestDataForLog.patron_id
+                            },
+                            timestamp: new Date().toISOString()
+                        }]);
+                }
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["borrow_requests"] });
@@ -326,6 +415,33 @@ export function useProcessReturnRequest() {
             if (error) {
                 console.error(`Supabase error processing return request ${requestId}:`, error);
                 throw error;
+            }
+
+            const { data: requestDataForLog } = await supabase
+                .from('return_requests')
+                .select('*')
+                .eq('id', requestId)
+                .maybeSingle();
+
+            if (requestDataForLog) {
+                const patronUserId = await getPatronUserIdByPatronId(requestDataForLog.patron_id);
+                if (patronUserId) {
+                    await supabase
+                        .from('activity_logs')
+                        .insert([{
+                            type: status === "approved" ? "return_approved" : "return_denied",
+                            description: `Return request ${status} for "${requestDataForLog.book_title}"`,
+                            user_id: patronUserId,
+                            target_id: requestDataForLog.book_id,
+                            metadata: {
+                                requestId,
+                                checkoutId: requestDataForLog.checkout_id,
+                                bookId: requestDataForLog.book_id,
+                                patronId: requestDataForLog.patron_id
+                            },
+                            timestamp: new Date().toISOString()
+                        }]);
+                }
             }
         },
         onSuccess: () => {
