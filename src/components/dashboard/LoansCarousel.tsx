@@ -1,6 +1,7 @@
 "use client";
 
 import { usePatronCheckouts, useRenewLoan } from "@/lib/api/checkouts";
+import { useCreateReturnRequest, usePatronReturnRequests } from "@/lib/api/requests";
 import { useBook } from "@/lib/api/books";
 import { Checkout } from "@/types";
 import { format, isPast, isToday, addDays } from "date-fns";
@@ -10,9 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoansCarousel({ patronId }: { patronId: string }) {
     const { data: loans, isLoading } = usePatronCheckouts(patronId);
+    const { data: returnRequests } = usePatronReturnRequests(patronId);
+    const createReturnRequest = useCreateReturnRequest();
+    const { profile } = useAuth();
 
     if (isLoading) {
         return (
@@ -42,14 +47,44 @@ export function LoansCarousel({ patronId }: { patronId: string }) {
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-hide snap-x">
             {loans.map((loan) => (
                 <div key={loan.id} className="min-w-[320px] max-w-[320px] snap-start">
-                    <LoanCard loan={loan} />
+                    <LoanCard
+                        loan={loan}
+                        hasPendingReturn={!!returnRequests?.find(request => request.checkoutId === loan.id && request.status === "pending")}
+                        isRequestingReturn={createReturnRequest.isPending}
+                        onRequestReturn={async () => {
+                            if (!profile) return;
+                            try {
+                                await createReturnRequest.mutateAsync({
+                                    checkoutId: loan.id,
+                                    bookId: loan.bookId,
+                                    patronId,
+                                    requesterName: profile.displayName || profile.email || "Patron",
+                                    bookTitle: loan.bookTitle
+                                });
+                                toast.success("Return request sent.");
+                            } catch (error: unknown) {
+                                const message = error instanceof Error ? error.message : "Failed to request return.";
+                                toast.error(message);
+                            }
+                        }}
+                    />
                 </div>
             ))}
         </div>
     );
 }
 
-function LoanCard({ loan }: { loan: Checkout }) {
+function LoanCard({
+    loan,
+    hasPendingReturn,
+    isRequestingReturn,
+    onRequestReturn
+}: {
+    loan: Checkout;
+    hasPendingReturn: boolean;
+    isRequestingReturn: boolean;
+    onRequestReturn: () => void;
+}) {
     const { data: book } = useBook(loan.bookId);
     const renewMutation = useRenewLoan();
 
@@ -109,6 +144,21 @@ function LoanCard({ loan }: { loan: Checkout }) {
                 </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 gap-2">
+                {hasPendingReturn ? (
+                    <Badge variant="secondary" className="flex-1 justify-center bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+                        Return Requested
+                    </Badge>
+                ) : (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={onRequestReturn}
+                        disabled={isRequestingReturn}
+                    >
+                        {isRequestingReturn ? "Requesting..." : "Request Return"}
+                    </Button>
+                )}
                 <Button
                     variant="outline"
                     size="sm"
