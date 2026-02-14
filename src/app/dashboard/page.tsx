@@ -125,12 +125,12 @@ export default function DashboardPage() {
                             {isPatron ? (
                                 <>
                                     <Link href="/books" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                        <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                             <Book className="h-5 w-5" /> Browse Catalog
                                         </Button>
                                     </Link>
                                     <Link href="/profile" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                        <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                             <Users className="h-5 w-5" /> My Membership
                                         </Button>
                                     </Link>
@@ -138,25 +138,25 @@ export default function DashboardPage() {
                             ) : (
                                 <>
                                     <Link href="/checkout" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                        <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                             <ArrowRightLeft className="h-5 w-5" /> Checkout
                                         </Button>
                                     </Link>
                                     <Link href="/returns" className="w-full">
-                                        <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                        <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                             <RotateCcw className="h-5 w-5" /> Return
                                         </Button>
                                     </Link>
                                     {profile?.role === "admin" && (
                                         <Link href="/books/new" className="w-full">
-                                            <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                            <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                                 <Plus className="h-5 w-5" /> Add Book
                                             </Button>
                                         </Link>
                                     )}
                                     {profile?.role === "admin" && (
                                         <Link href="/patrons/manual" className="w-full">
-                                            <Button className="w-full h-16 text-lg gap-2" variant="outline">
+                                            <Button className="w-full h-16 gap-2 text-base sm:text-lg items-center justify-center text-center" variant="outline">
                                                 <UserPlus className="h-5 w-5" /> Admin Onboarding
                                             </Button>
                                         </Link>
