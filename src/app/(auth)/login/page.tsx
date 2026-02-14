@@ -26,6 +26,9 @@ export default function LoginPage() {
     const { user, profile, loading: authLoading, login, register, loginWithGoogle } = useAuth();
     const router = useRouter();
     const lastRedirectTo = useRef<string | null>(null);
+    const isLocalhost =
+        typeof window !== "undefined" &&
+        ["localhost", "127.0.0.1", "0.0.0.0"].includes(window.location.hostname);
 
     useEffect(() => {
         // Only redirect if auth has finished loading and we have a user AND profile
@@ -136,6 +139,12 @@ export default function LoginPage() {
                     </div>
 
                     <div className="grid gap-6">
+                        {isLocalhost && (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                                You are using localhost. On a phone, open the app using your computer’s IP address
+                                (for example http://192.168.1.23:3000) or use a public URL.
+                            </div>
+                        )}
                         <form onSubmit={handleAuth} className="space-y-4">
                             {isRegistering && (
                                 <div className="space-y-2">

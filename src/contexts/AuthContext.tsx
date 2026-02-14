@@ -334,7 +334,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error("Supabase is not configured. Please set environment variables.");
         }
         try {
-            const redirectTo = `${window.location.origin}/login`;
+            const redirectBase = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+            const redirectTo = `${redirectBase}/login`;
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
