@@ -64,10 +64,16 @@ export async function POST(request: Request) {
              }
         }
 
+        const normalizedBody = {
+            ...body,
+            first_name: typeof body.first_name === "string" ? body.first_name : "",
+            last_name: typeof body.last_name === "string" ? body.last_name : ""
+        };
+
         // Proceed to create patron using admin client (bypassing RLS)
         const { data, error } = await supabaseAdmin
             .from('patrons')
-            .insert([body])
+            .insert([normalizedBody])
             .select()
             .single();
 

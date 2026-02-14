@@ -52,8 +52,8 @@ function mapPatronToDB(patron: Partial<Patron>) {
     const data: Record<string, unknown> = {};
     if (patron.memberId) data.member_id = patron.memberId;
     if (patron.email) data.email = patron.email;
-    if (patron.firstName) data.first_name = patron.firstName;
-    if (patron.lastName) data.last_name = patron.lastName;
+    if (patron.firstName !== undefined) data.first_name = patron.firstName;
+    if (patron.lastName !== undefined) data.last_name = patron.lastName;
     if (patron.phone) data.phone = patron.phone;
     if (patron.address) data.address = patron.address;
     if (patron.membershipStatus) data.membership_status = patron.membershipStatus;
