@@ -91,6 +91,18 @@ export interface BorrowRequest {
     adminNotes?: string;
 }
 
+export interface ReturnRequest {
+    id: string;
+    checkoutId: string;
+    bookId: string;
+    patronId: string;
+    requesterName: string;
+    bookTitle: string;
+    requestDate: string;
+    status: 'pending' | 'approved' | 'denied';
+    adminNotes?: string;
+}
+
 export interface UserProfile {
     id: string;
     email: string;

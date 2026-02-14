@@ -29,13 +29,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDeleteBook } from "@/lib/api/books";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateBorrowRequest, usePatronRequests } from "@/lib/api/requests";
+import { useCreateBorrowRequest, useCreateReturnRequest, usePatronRequests, usePatronReturnRequests } from "@/lib/api/requests";
 import { usePatronByEmail } from "@/lib/api/patrons";
+import { usePatronCheckouts } from "@/lib/api/checkouts";
 import { Loader2, BookCheck, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { BorrowRequestModal } from "@/components/books/BorrowRequestModal";
-import { Book as BookType } from "@/types";
+import { Book as BookType, Checkout } from "@/types";
 
 export default function BooksPage() {
     const [search, setSearch] = useState("");
@@ -54,8 +55,11 @@ export default function BooksPage() {
     const { data: patron } = usePatronByEmail(patronEmail);
     console.log("Debug: patron lookup result:", patron, "for email:", patronEmail);
     const { data: myRequests } = usePatronRequests(patron?.id || "");
+    const { data: myReturnRequests } = usePatronReturnRequests(patron?.id || "");
+    const { data: patronCheckouts } = usePatronCheckouts(patron?.id);
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
+    const createReturnRequest = useCreateReturnRequest();
 
     const isPatron = profile?.role === "patron";
     const canBulkDelete = profile?.role === "admin";
@@ -107,6 +111,24 @@ export default function BooksPage() {
         console.log("Debug: Proceeding with patron:", patron);
         setSelectedBookForModal(book);
         setIsModalOpen(true);
+    };
+
+    const handleRequestReturn = async (checkout: Checkout, book: BookType) => {
+        if (!profile || !patron?.id) return;
+
+        try {
+            await createReturnRequest.mutateAsync({
+                checkoutId: checkout.id,
+                bookId: book.id || "",
+                patronId: patron.id,
+                requesterName: profile.displayName || profile.email || "Patron",
+                bookTitle: book.title
+            });
+            toast.success("Return request sent.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to request return.";
+            toast.error(message);
+        }
     };
 
     return (
@@ -267,6 +289,27 @@ export default function BooksPage() {
                                                     </Link>
                                                     {isPatron && (
                                                         (() => {
+                                                            const activeCheckout = patronCheckouts?.find(checkout => checkout.bookId === book.id);
+                                                            if (activeCheckout) {
+                                                                const pendingReturn = myReturnRequests?.find(
+                                                                    request => request.checkoutId === activeCheckout.id && request.status === "pending"
+                                                                );
+                                                                if (pendingReturn) {
+                                                                    return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">Return Requested</Badge>;
+                                                                }
+                                                                return (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="gap-1.5"
+                                                                        disabled={createReturnRequest.isPending}
+                                                                        onClick={() => handleRequestReturn(activeCheckout, book)}
+                                                                    >
+                                                                        {createReturnRequest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                                                                        Request Return
+                                                                    </Button>
+                                                                );
+                                                            }
                                                             const existingRequest = myRequests?.find(r => r.bookId === book.id && r.status === "pending");
                                                             const isApproved = myRequests?.find(r => r.bookId === book.id && r.status === "approved");
 
@@ -351,6 +394,27 @@ export default function BooksPage() {
                                         </Link>
                                         {isPatron && (
                                             (() => {
+                                                const activeCheckout = patronCheckouts?.find(checkout => checkout.bookId === book.id);
+                                                if (activeCheckout) {
+                                                    const pendingReturn = myReturnRequests?.find(
+                                                        request => request.checkoutId === activeCheckout.id && request.status === "pending"
+                                                    );
+                                                    if (pendingReturn) {
+                                                        return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 py-1.5 h-9 grow">Return Requested</Badge>;
+                                                    }
+                                                    return (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="flex-1 gap-1.5"
+                                                            disabled={createReturnRequest.isPending}
+                                                            onClick={() => handleRequestReturn(activeCheckout, book)}
+                                                        >
+                                                            {createReturnRequest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                                                            Request Return
+                                                        </Button>
+                                                    );
+                                                }
                                                 const existingRequest = myRequests?.find(r => r.bookId === book.id && r.status === "pending");
                                                 const isApproved = myRequests?.find(r => r.bookId === book.id && r.status === "approved");
 

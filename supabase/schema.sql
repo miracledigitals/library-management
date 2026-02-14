@@ -123,6 +123,19 @@ CREATE TABLE IF NOT EXISTS borrow_requests (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS return_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  checkout_id UUID REFERENCES checkouts(id) NOT NULL,
+  book_id UUID REFERENCES books(id) NOT NULL,
+  patron_id UUID REFERENCES patrons(id) NOT NULL,
+  requester_name TEXT,
+  book_title TEXT,
+  status TEXT CHECK (status IN ('pending', 'approved', 'denied', 'cancelled')) DEFAULT 'pending',
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create activity_logs table
 CREATE TABLE IF NOT EXISTS activity_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -199,6 +212,14 @@ CREATE POLICY "Authenticated users can manage their own requests" ON borrow_requ
   patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
 );
 CREATE POLICY "Admins/Librarians can manage all requests" ON borrow_requests FOR ALL USING (is_librarian_or_admin());
+
+ALTER TABLE return_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can manage their own return requests" ON return_requests FOR ALL USING (
+  patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
+) WITH CHECK (
+  patron_id IN (SELECT id FROM patrons WHERE lower(trim(email)) = lower(trim(auth.jwt() ->> 'email')))
+);
+CREATE POLICY "Admins/Librarians can manage all return requests" ON return_requests FOR ALL USING (is_librarian_or_admin());
 
 -- Activity Logs: Admins read all, users create
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
