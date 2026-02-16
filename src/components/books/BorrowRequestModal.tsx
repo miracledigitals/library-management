@@ -66,7 +66,7 @@ export function BorrowRequestModal({
                 patronId,
                 requesterName: patronName,
                 bookTitle: book.title,
-                adminNotes: `Pickup: ${pickupLocation} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested slow reader extension." : ""}`
+                adminNotes: `Pickup: ${pickupLocation} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested additional 10 days." : ""}`
             });
             toast.success("Borrow application submitted!");
             onOpenChange(false);
@@ -139,11 +139,11 @@ export function BorrowRequestModal({
                                         onCheckedChange={(v) => setIsSlowReader(v as boolean)}
                                     />
                                     <Label htmlFor="slow-reader" className="text-sm cursor-pointer">
-                                        I&apos;m a slow reader - request extended loan (21 days)
+                                        Request additional 10 days (total 31 days)
                                     </Label>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground ml-6 italic">
-                                    Standard loan period is 14 days. Verification may apply.
+                                    Standard loan period is 21 days. Verification may apply.
                                 </p>
                             </div>
                         </div>
@@ -195,15 +195,7 @@ export function BorrowRequestModal({
                                 <ul className="text-xs space-y-2 text-muted-foreground">
                                     <li className="flex gap-2">
                                         <span className="text-emerald-600">•</span>
-                                        Loan Duration: {isSlowReader ? "21" : "14"} days from pickup.
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <span className="text-emerald-600">•</span>
-                                        Late Fee: $0.50/day (max $10.00).
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <span className="text-emerald-600">•</span>
-                                        Replacement Cost: $25.00 if lost or damaged.
+                                        Loan Duration: {isSlowReader ? "31" : "21"} days from pickup.
                                     </li>
                                 </ul>
                             </div>

@@ -18,13 +18,18 @@ import {
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { usePatronRequests } from "@/lib/api/requests";
+import { usePatronByEmail } from "@/lib/api/patrons";
+import { usePatronCheckouts } from "@/lib/api/checkouts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Link from "next/link";
 
 export default function ProfilePage() {
     const { profile, user } = useAuth();
-    const { data: requests, isLoading: isLoadingRequests } = usePatronRequests(user?.id || "");
+    const patronEmail = profile?.email || user?.email || "";
+    const { data: patron } = usePatronByEmail(patronEmail);
+    const { data: patronCheckouts, isLoading: isLoadingCheckouts } = usePatronCheckouts(patron?.id);
+    const { data: requests, isLoading: isLoadingRequests } = usePatronRequests(patron?.id || "");
 
     if (!profile) return null;
 
@@ -95,7 +100,9 @@ export default function ProfilePage() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-3xl font-bold">{profile.currentCheckouts || 0} Books</div>
+                                            <div className="text-3xl font-bold">
+                                                {isLoadingCheckouts ? "—" : `${patronCheckouts?.length || 0} Books`}
+                                            </div>
                                             <p className="text-xs text-muted-foreground mt-1">Limit: 5 books</p>
                                         </CardContent>
                                     </Card>
