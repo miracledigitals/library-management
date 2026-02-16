@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LABRINTH",
   description: "Modern library management for everyone",
+  icons: {
+    icon: "/labrinth-logo.png",
+    apple: "/labrinth-logo.png"
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

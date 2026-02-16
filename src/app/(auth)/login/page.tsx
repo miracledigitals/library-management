@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Book, Chrome } from "lucide-react";
+import { Chrome } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -100,8 +100,8 @@ export default function LoginPage() {
                 />
                 <div className="relative z-20 flex h-full flex-col p-10 text-white">
                     <div className="flex items-center text-2xl font-bold tracking-tight">
-                        <div className="mr-3 rounded-lg bg-primary p-2">
-                            <Book className="h-6 w-6 text-primary-foreground" />
+                        <div className="mr-3">
+                            <img src="/labrinth-logo.png" alt="LABRINTH" className="h-10 w-10" />
                         </div>
                         LABRINTH
                     </div>
@@ -124,9 +124,7 @@ export default function LoginPage() {
                 <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <div className="flex flex-col space-y-2 text-center lg:text-left">
                         <div className="flex lg:hidden justify-center mb-4">
-                            <div className="rounded-xl bg-primary p-3 shadow-lg">
-                                <Book className="h-8 w-8 text-primary-foreground" />
-                            </div>
+                            <img src="/labrinth-logo.png" alt="LABRINTH" className="h-12 w-12" />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight">
                             {isRegistering ? "Create an account" : "Welcome back"}
