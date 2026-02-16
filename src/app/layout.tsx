@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   title: "LABRINTH",
   description: "Modern library management for everyone",
   icons: {
-    icon: "/labrinth-logo.png",
-    apple: "/labrinth-logo.png"
+    icon: "/labrinth-logo.png.png",
+    apple: "/labrinth-logo.png.png"
   },
   appleWebApp: {
     capable: true,

@@ -63,7 +63,7 @@ export function Sidebar({ className, onNavigate }: { className?: string; onNavig
         <div className={cn("flex h-full w-full lg:w-64 flex-col border-r bg-card text-card-foreground", className)}>
             <div className="flex h-16 items-center border-b px-6">
                 <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                    <img src="/labrinth-logo.png" alt="LABRINTH" className="h-6 w-6" />
+                    <img src="/labrinth-logo.png.png" alt="LABRINTH" className="h-6 w-6" />
                     <span>LABRINTH</span>
                 </Link>
             </div>

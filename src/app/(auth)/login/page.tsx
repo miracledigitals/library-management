@@ -101,7 +101,7 @@ export default function LoginPage() {
                 <div className="relative z-20 flex h-full flex-col p-10 text-white">
                     <div className="flex items-center text-2xl font-bold tracking-tight">
                         <div className="mr-3">
-                            <img src="/labrinth-logo.png" alt="LABRINTH" className="h-10 w-10" />
+                            <img src="/labrinth-logo.png.png" alt="LABRINTH" className="h-10 w-10" />
                         </div>
                         LABRINTH
                     </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                 <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <div className="flex flex-col space-y-2 text-center lg:text-left">
                         <div className="flex lg:hidden justify-center mb-4">
-                            <img src="/labrinth-logo.png" alt="LABRINTH" className="h-12 w-12" />
+                            <img src="/labrinth-logo.png.png" alt="LABRINTH" className="h-12 w-12" />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight">
                             {isRegistering ? "Create an account" : "Welcome back"}
