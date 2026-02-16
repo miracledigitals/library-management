@@ -72,7 +72,7 @@ export default function LoginPage() {
                 <div className="flex flex-col items-center gap-4">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">
-                        {user ? "Setting up your session..." : "Loading LMS Pro..."}
+                        {user ? "Setting up your session..." : "Loading LABRINTH..."}
                     </p>
                 </div>
             </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
                         <div className="mr-3 rounded-lg bg-primary p-2">
                             <Book className="h-6 w-6 text-primary-foreground" />
                         </div>
-                        LMS Pro
+                        LABRINTH
                     </div>
                     <div className="mt-auto">
                         <blockquote className="space-y-4">

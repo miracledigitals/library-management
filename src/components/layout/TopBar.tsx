@@ -163,7 +163,7 @@ export function TopBar() {
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={avatarUrl} />
                                 <AvatarFallback className="bg-primary text-primary-foreground">
-                                    {user?.email?.substring(0, 2).toUpperCase() || "LMS"}
+                                    {user?.email?.substring(0, 2).toUpperCase() || "LA"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col items-start text-xs hidden sm:flex">

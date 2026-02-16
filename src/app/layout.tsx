@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Library Management System",
+  title: "LABRINTH",
   description: "Modern library management for everyone",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Library MS",
+    title: "LABRINTH",
   },
   formatDetection: {
     telephone: false,
