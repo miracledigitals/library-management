@@ -23,7 +23,8 @@ export default function LoginPage() {
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState<"patron" | "admin">("patron");
     const [loading, setLoading] = useState(false);
-    const { user, profile, loading: authLoading, login, register, loginWithGoogle } = useAuth();
+    const [resetting, setResetting] = useState(false);
+    const { user, profile, loading: authLoading, login, register, loginWithGoogle, requestPasswordReset } = useAuth();
     const router = useRouter();
     const lastRedirectTo = useRef<string | null>(null);
     const isLocalhost =
@@ -87,6 +88,23 @@ export default function LoginPage() {
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Failed to login with Google";
             toast.error(message);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            toast.error("Enter your email first.");
+            return;
+        }
+        setResetting(true);
+        try {
+            await requestPasswordReset(email);
+            toast.success("Password reset email sent.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to send reset email";
+            toast.error(message);
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -200,9 +218,10 @@ export default function LoginPage() {
                                         <button
                                             type="button"
                                             className="text-xs text-primary hover:underline"
-                                            onClick={() => toast.info("Please contact your librarian to reset password.")}
+                                            onClick={handleForgotPassword}
+                                            disabled={resetting}
                                         >
-                                            Forgot password?
+                                            {resetting ? "Sending..." : "Forgot password?"}
                                         </button>
                                     )}
                                 </div>

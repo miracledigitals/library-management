@@ -11,6 +11,7 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    requestPasswordReset: (email: string) => Promise<void>;
     register: (email: string, password: string, fullName: string, role: "admin" | "patron") => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
@@ -279,7 +280,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
             if (error.message.includes("Invalid login credentials")) {
-                // If login fails, check if the email actually exists in our profiles to give a better error message
                 const { data: profileCheck } = await supabase
                     .from('profiles')
                     .select('email')
@@ -287,8 +287,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .maybeSingle();
                 
                 if (!profileCheck) {
-                    throw new Error("This email is not registered. Please sign up first.");
+                    throw new Error("Invalid email.");
                 }
+                throw new Error("Invalid password.");
+            }
+            if (error.message.includes("Email not confirmed")) {
+                throw new Error("Email not confirmed.");
             }
             throw error;
         }
@@ -297,6 +301,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.user) {
             await handleUserChange(data.user);
         }
+    };
+
+    const requestPasswordReset = async (email: string) => {
+        if (!isSupabaseConfigured) {
+            throw new Error("Supabase is not configured. Please set environment variables.");
+        }
+        const redirectBase = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const redirectTo = `${redirectBase}/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) throw error;
     };
 
     const register = async (email: string, password: string, fullName: string, role: "admin" | "patron" = "patron") => {
@@ -376,6 +390,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 profile,
                 loading,
                 login,
+                requestPasswordReset,
                 register,
                 loginWithGoogle,
                 logout,
