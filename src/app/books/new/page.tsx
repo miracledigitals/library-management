@@ -46,6 +46,34 @@ interface CSVBook {
     uploadError?: string;
 }
 
+const fetchCoverImage = async (isbn: string, title: string, author: string): Promise<string | null> => {
+    // 1. Try ISBN lookup first if it is a real ISBN (not a pseudo-ISBN)
+    if (isbn && !isbn.startsWith("AUTO-")) {
+        try {
+            const info = await lookupISBN(isbn);
+            if (info?.imageLinks?.thumbnail) {
+                return info.imageLinks.thumbnail.replace("http://", "https://");
+            }
+        } catch (e) {
+            console.warn("ISBN cover image lookup failed:", e);
+        }
+    }
+
+    // 2. Fallback to searching Title + Author
+    try {
+        const query = `intitle:${title} inauthor:${author}`;
+        const results = await searchBooks(query);
+        const match = results.find(r => r.imageLinks?.thumbnail);
+        if (match?.imageLinks?.thumbnail) {
+            return match.imageLinks.thumbnail.replace("http://", "https://");
+        }
+    } catch (e) {
+        console.warn("Search cover image lookup failed:", e);
+    }
+
+    return null;
+};
+
 export default function NewBookPage() {
     const router = useRouter();
     const createBook = useCreateBook();
@@ -164,10 +192,24 @@ export default function NewBookPage() {
 
         const generatedIsbn = formData.isbn.trim() || `AUTO-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+        let finalCoverImage = formData.coverImage;
+        if (!finalCoverImage) {
+            toast.info("Searching internet for book cover image...");
+            try {
+                finalCoverImage = await fetchCoverImage(generatedIsbn, formData.title, formData.author);
+                if (finalCoverImage) {
+                    toast.success("Book cover image successfully retrieved!");
+                }
+            } catch (err) {
+                console.warn("Could not fetch cover image:", err);
+            }
+        }
+
         try {
             await createBook.mutateAsync({
                 ...formData,
-                isbn: generatedIsbn
+                isbn: generatedIsbn,
+                coverImage: finalCoverImage
             });
             toast.success("Book added successfully");
             router.push("/books");
@@ -416,6 +458,16 @@ export default function NewBookPage() {
 
             setParsedBooks(prev => prev.map((b, i) => i === idx ? { ...b, uploadStatus: "uploading" } : b));
 
+            // Fetch cover image in background if missing
+            let finalCoverImage = book.coverImage;
+            if (!finalCoverImage) {
+                try {
+                    finalCoverImage = await fetchCoverImage(book.isbn, book.title, book.author);
+                } catch (err) {
+                    console.warn("Bulk upload cover image fetch error:", err);
+                }
+            }
+
             try {
                 const payload = {
                     isbn: book.isbn,
@@ -429,13 +481,13 @@ export default function NewBookPage() {
                     availableCopies: book.availableCopies,
                     location: book.location,
                     status: book.status,
-                    coverImage: book.coverImage,
+                    coverImage: finalCoverImage,
                     metadata: book.metadata
                 };
                 await createBook.mutateAsync(payload);
                 
                 successCount++;
-                setParsedBooks(prev => prev.map((b, i) => i === idx ? { ...b, uploadStatus: "success" } : b));
+                setParsedBooks(prev => prev.map((b, i) => i === idx ? { ...b, uploadStatus: "success", coverImage: finalCoverImage } : b));
             } catch (error: any) {
                 failedCount++;
                 const errMsg = error?.message || error?.details || "Failed to add book";
