@@ -172,6 +172,12 @@ CREATE POLICY "Admins/Librarians can manage patrons" ON patrons FOR ALL USING (
 CREATE POLICY "Users can read their own patron record" ON patrons FOR SELECT USING (
   lower(trim(email)) = lower(trim(auth.jwt() ->> 'email'))
 );
+CREATE POLICY "Users can insert their own patron record" ON patrons FOR INSERT WITH CHECK (
+  lower(trim(email)) = lower(trim(auth.jwt() ->> 'email'))
+);
+CREATE POLICY "Users can update their own patron record" ON patrons FOR UPDATE USING (
+  lower(trim(email)) = lower(trim(auth.jwt() ->> 'email'))
+);
 
 ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins/Librarians can manage staff" ON staff FOR ALL USING (

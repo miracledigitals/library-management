@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDeleteBook } from "@/lib/api/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateBorrowRequest, useCreateReturnRequest, usePatronRequests, usePatronReturnRequests } from "@/lib/api/requests";
-import { usePatronByEmail } from "@/lib/api/patrons";
+import { usePatronByEmail, useCreatePatron } from "@/lib/api/patrons";
 import { usePatronCheckouts } from "@/lib/api/checkouts";
 import { Loader2, BookCheck, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,18 +46,22 @@ export default function BooksPage() {
     const [viewMode, setViewMode] = useState<"table" | "grid">("table");
     const [selectedBookForModal, setSelectedBookForModal] = useState<BookType | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [createdPatronId, setCreatedPatronId] = useState<string>("");
     const queryClient = useQueryClient();
 
     const { profile, user } = useAuth();
     const { data: books, isLoading, refetch } = useBooks({ search, genre, status });
     const patronEmail = profile?.email || user?.email || "";
-    const { data: patron } = usePatronByEmail(patronEmail);
-    const { data: myRequests } = usePatronRequests(patron?.id || "");
-    const { data: myReturnRequests } = usePatronReturnRequests(patron?.id || "");
-    const { data: patronCheckouts } = usePatronCheckouts(patron?.id);
+    const { data: patron, isLoading: isPatronLoading } = usePatronByEmail(patronEmail);
+    const activePatronId = patron?.id || createdPatronId;
+    
+    const { data: myRequests } = usePatronRequests(activePatronId);
+    const { data: myReturnRequests } = usePatronReturnRequests(activePatronId);
+    const { data: patronCheckouts } = usePatronCheckouts(activePatronId);
     const deleteBook = useDeleteBook();
     const createRequest = useCreateBorrowRequest();
     const createReturnRequest = useCreateReturnRequest();
+    const createPatron = useCreatePatron();
 
     const isPatron = profile?.role === "patron";
     const canBulkDelete = profile?.role === "admin";
@@ -112,14 +116,47 @@ export default function BooksPage() {
     const handleRequestBorrow = async (book: BookType) => {
         if (!profile) return;
         
-        // We rely on DashboardLayout to handle patron creation.
-        // If we are here, the patron record should exist or be creating.
-        if (!patron?.id) {
-            toast.error("Account setup in progress. Please try again in a moment.");
+        if (isPatronLoading) {
+            toast.info("Loading account details. Please wait a moment...");
             return;
         }
         
-        console.log("Debug: Proceeding with patron:", patron);
+        let currentPatron = patron;
+        
+        if (!currentPatron?.id) {
+            toast.info("Setting up your library account profile...");
+            try {
+                const newPatron = await createPatron.mutateAsync({
+                    memberId: `MB${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    email: patronEmail,
+                    firstName: profile.displayName?.split(' ')[0] || '',
+                    lastName: profile.displayName?.split(' ').slice(1).join(' ') || '',
+                    phone: '',
+                    address: {
+                        street: '',
+                        city: '',
+                        zipCode: ''
+                    },
+                    membershipStatus: 'active',
+                    membershipType: 'standard',
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    maxBooksAllowed: 5,
+                    currentCheckouts: 0,
+                    totalCheckoutsHistory: 0,
+                    finesDue: 0,
+                    notes: ''
+                });
+                currentPatron = newPatron;
+                setCreatedPatronId(newPatron.id || "");
+                toast.success("Account setup completed!");
+            } catch (err) {
+                console.error("Account setup failed:", err);
+                toast.error("Account setup in progress. Please try again in a moment.");
+                return;
+            }
+        }
+        
+        console.log("Debug: Proceeding with patron:", currentPatron);
         setSelectedBookForModal(book);
         setIsModalOpen(true);
     };
@@ -454,7 +491,7 @@ export default function BooksPage() {
                     book={selectedBookForModal}
                     open={isModalOpen}
                     onOpenChange={setIsModalOpen}
-                    patronId={patron?.id || ""}
+                    patronId={activePatronId}
                     patronName={profile?.displayName || profile?.email || "Patron"}
                 />
             )}

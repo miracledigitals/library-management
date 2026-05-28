@@ -167,42 +167,56 @@ export function useCreatePatron() {
                 throw new Error("No active session");
             }
 
-            const response = await fetch('/api/patrons', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(dbData)
-            });
-
-            const responseText = await response.text();
-            let data: PatronRow | { error?: string } | null = null;
-            if (responseText) {
-                try {
-                    data = JSON.parse(responseText);
-                } catch {
-                    data = null;
-                }
-            }
-
-            const errorMessage =
-                data && typeof data === "object" && "error" in data ? data.error : undefined;
-
-            if (!response.ok) {
-                console.error("API error creating patron:", {
-                    status: response.status,
-                    statusText: response.statusText,
-                    body: data ?? responseText
+            try {
+                const response = await fetch('/api/patrons', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dbData)
                 });
-                throw new Error(errorMessage || `Failed to create patron (status ${response.status})`);
-            }
 
-            if (!data || typeof data !== "object" || !("id" in data)) {
-                throw new Error("Failed to create patron (invalid response)");
-            }
+                if (!response.ok) {
+                    const responseText = await response.text();
+                    let data: { error?: string } | null = null;
+                    if (responseText) {
+                        try {
+                            data = JSON.parse(responseText);
+                        } catch {
+                            data = null;
+                        }
+                    }
+                    const errorMessage = data?.error || `HTTP error ${response.status}`;
+                    throw new Error(errorMessage);
+                }
 
-            return mapPatronFromDB(data);
+                const responseText = await response.text();
+                const data = responseText ? JSON.parse(responseText) : null;
+
+                if (!data || typeof data !== "object" || !("id" in data)) {
+                    throw new Error("Failed to create patron (invalid response)");
+                }
+
+                return mapPatronFromDB(data);
+            } catch (apiError) {
+                // FALLBACK: If the API fails (e.g. because SUPABASE_SERVICE_ROLE_KEY is missing in Vercel),
+                // attempt to insert directly using the client-side supabase client!
+                console.warn("API patron creation failed, trying fallback direct client insert:", apiError);
+                
+                const { data, error } = await supabase
+                    .from('patrons')
+                    .insert([dbData])
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error("Direct fallback insert failed too:", error);
+                    throw new Error(`Account setup failed. Please contact your administrator. Details: ${error.message}`);
+                }
+
+                return mapPatronFromDB(data as unknown as PatronRow);
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["patrons"] });
