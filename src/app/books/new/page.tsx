@@ -157,13 +157,18 @@ export default function NewBookPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!formData.isbn || !formData.title || !formData.author) {
-            toast.error("ISBN, Title, and Author are required fields.");
+        if (!formData.title || !formData.author) {
+            toast.error("Title and Author are required fields.");
             return;
         }
 
+        const generatedIsbn = formData.isbn.trim() || `AUTO-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
         try {
-            await createBook.mutateAsync(formData);
+            await createBook.mutateAsync({
+                ...formData,
+                isbn: generatedIsbn
+            });
             toast.success("Book added successfully");
             router.push("/books");
         } catch (error: unknown) {
@@ -266,9 +271,9 @@ export default function NewBookPage() {
                 const copiesIdx = header.findIndex(h => h.includes("copies") || h === "total_copies" || h === "totalcopies");
                 const locIdx = header.findIndex(h => h === "location" || h === "shelf" || h.includes("shelf"));
 
-                // Require at least ISBN, Title, and Author columns
-                if (titleIdx === -1 || authorIdx === -1 || isbnIdx === -1) {
-                    toast.error("CSV columns must include: 'isbn', 'title', and 'author'");
+                // Require at least Title and Author columns
+                if (titleIdx === -1 || authorIdx === -1) {
+                    toast.error("CSV columns must include: 'title' and 'author'");
                     return;
                 }
 
@@ -291,6 +296,8 @@ export default function NewBookPage() {
                     const rawLoc = locIdx !== -1 && row[locIdx] ? row[locIdx].trim() : "";
 
                     // Parsing & Normalization
+                    const isbn = rawIsbn || `AUTO-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}-${i}`;
+
                     let publishedYear = new Date().getFullYear();
                     if (rawYear) {
                         const parsed = parseInt(rawYear);
@@ -310,16 +317,14 @@ export default function NewBookPage() {
                     }
 
                     let validationError = "";
-                    if (!rawIsbn) {
-                        validationError = "Missing ISBN";
-                    } else if (!rawTitle) {
+                    if (!rawTitle) {
                         validationError = "Missing Title";
                     } else if (!rawAuthor) {
                         validationError = "Missing Author";
                     }
 
                     books.push({
-                        isbn: rawIsbn,
+                        isbn,
                         title: rawTitle,
                         author: rawAuthor,
                         publisher: rawPublisher,

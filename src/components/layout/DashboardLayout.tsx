@@ -25,9 +25,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }
     }, [user, loading, router]);
 
-    // Auto-create patron if missing
+    // Auto-create patron if missing (skip for admin and librarian roles)
     useEffect(() => {
-        if (loading || isPatronLoading || !user?.email || !profile || patron || isCreatingPatron || hasTriedAutoCreate) return;
+        if (loading || isPatronLoading || !user?.email || !profile || profile.role !== 'patron' || patron || isCreatingPatron || hasTriedAutoCreate) return;
 
         const setupAccount = async () => {
             setIsCreatingPatron(true);
@@ -58,16 +58,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 
                 toast.success("Account setup completed!");
             } catch (error) {
-                console.error("Auto-healing failed:", error);
-                // Do not show error toast to avoid spamming if it happens on every page load, 
-                // but since we stop retrying, one error is fine.
-                // Improve error message if it's the configuration error
-                const errorMessage = error instanceof Error ? error.message : "Unknown error";
-                if (errorMessage.includes("Missing configuration")) {
-                    toast.error("Setup failed: Missing Server Configuration (SUPABASE_SERVICE_ROLE_KEY)");
-                } else {
-                    toast.error("Failed to setup account automatically. Please contact support.");
-                }
+                // Auto-healing configuration failures should be logged in the console rather than shown in toast alerts
+                console.warn("Auto-healing configuration check / account setup: ", error);
             } finally {
                 setIsCreatingPatron(false);
                 setHasTriedAutoCreate(true);
