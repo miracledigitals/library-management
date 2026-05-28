@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useActiveCheckouts } from "@/lib/api/checkouts";
-import { useReturnRequests, useProcessReturnRequest } from "@/lib/api/requests";
+import { useReturnRequests, useProcessReturnRequest, useForceReturnBook } from "@/lib/api/requests";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Check, X, Info, Loader2 } from "lucide-react";
@@ -36,11 +38,46 @@ export default function ReturnsPage() {
     const { data: checkouts, isLoading } = useActiveCheckouts();
     const { data: returnRequests, isLoading: isLoadingRequests } = useReturnRequests();
     const processReturnRequest = useProcessReturnRequest();
+    const forceReturnBook = useForceReturnBook();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<ReturnRequest | null>(null);
     const [actionType, setActionType] = useState<'approved' | 'denied'>('approved');
     const [notes, setNotes] = useState("");
+
+    // Force Return State
+    const [isForceDialogOpen, setIsForceDialogOpen] = useState(false);
+    const [selectedCheckout, setSelectedCheckout] = useState<any | null>(null);
+    const [forceCondition, setForceCondition] = useState<"good" | "worn" | "damaged" | "lost">("good");
+    const [forceDamageTypes, setForceDamageTypes] = useState<string[]>([]);
+    const [forceNotes, setForceNotes] = useState("");
+
+    const handleForceReturnClick = (checkout: any) => {
+        setSelectedCheckout(checkout);
+        setForceCondition("good");
+        setForceDamageTypes([]);
+        setForceNotes("");
+        setIsForceDialogOpen(true);
+    };
+
+    const confirmForceReturn = async () => {
+        if (!selectedCheckout || !user) return;
+
+        try {
+            await forceReturnBook.mutateAsync({
+                checkoutId: selectedCheckout.id,
+                staffUserId: user.id || "",
+                condition: forceCondition,
+                damageTypes: forceDamageTypes,
+                notes: forceNotes
+            });
+            toast.success(`"${selectedCheckout.bookTitle}" returned successfully!`);
+            setIsForceDialogOpen(false);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to forcefully return book";
+            toast.error(message);
+        }
+    };
 
     const handleAction = (request: ReturnRequest, type: 'approved' | 'denied') => {
         setSelectedRequest(request);
@@ -191,6 +228,7 @@ export default function ReturnsPage() {
                                         <TableHead className="min-w-[150px]">Borrower</TableHead>
                                         <TableHead className="min-w-[120px]">Due Date</TableHead>
                                         <TableHead className="min-w-[100px]">Status</TableHead>
+                                        <TableHead className="text-right min-w-[140px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -201,6 +239,7 @@ export default function ReturnsPage() {
                                                 <TableCell><Skeleton className="h-4 w-full" /></TableCell>
                                                 <TableCell><Skeleton className="h-4 w-full" /></TableCell>
                                                 <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                                                <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                                             </TableRow>
                                         ))
                                     ) : checkouts?.length ? (
@@ -222,11 +261,21 @@ export default function ReturnsPage() {
                                                         {checkout.status}
                                                     </Badge>
                                                 </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleForceReturnClick(checkout)}
+                                                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20 border-amber-200"
+                                                    >
+                                                        Force Return
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground italic">
+                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">
                                                 No pending returns found.
                                             </TableCell>
                                         </TableRow>
@@ -267,6 +316,110 @@ export default function ReturnsPage() {
                         >
                             {processReturnRequest.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                             Confirm {actionType === 'approved' ? 'Approval' : 'Denial'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isForceDialogOpen} onOpenChange={setIsForceDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Force Return Book</DialogTitle>
+                        <DialogDescription>
+                            Mark "{selectedCheckout?.bookTitle}" as returned. This will instantly update inventory copies and physical location.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                        {/* Member & Book Details */}
+                        <div className="p-3 bg-muted/30 border rounded-md text-xs space-y-1">
+                            <div><span className="font-semibold">Borrower:</span> {selectedCheckout?.patronName} ({selectedCheckout?.patronMemberId})</div>
+                            <div><span className="font-semibold">ISBN:</span> {selectedCheckout?.bookIsbn}</div>
+                            <div><span className="font-semibold">Due Date:</span> {selectedCheckout?.dueDate && format(new Date(selectedCheckout.dueDate), "MMM dd, yyyy")}</div>
+                        </div>
+
+                        {/* Condition Selector */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Book Return Condition</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {(["good", "worn", "damaged", "lost"] as const).map((cond) => (
+                                    <Button
+                                        key={cond}
+                                        type="button"
+                                        variant={forceCondition === cond ? "default" : "outline"}
+                                        onClick={() => setForceCondition(cond)}
+                                        className="capitalize text-xs h-9 justify-center"
+                                    >
+                                        {cond}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Damage Types Checkboxes (if condition is damaged) */}
+                        {forceCondition === "damaged" && (
+                            <div className="space-y-2 border p-3 rounded-md bg-muted/20">
+                                <Label className="text-xs font-semibold text-muted-foreground">Select Damage Types (Fines Accrued)</Label>
+                                <div className="space-y-2 pt-1">
+                                    {[
+                                        { id: "water", label: "Water Damage ($15.00)" },
+                                        { id: "torn", label: "Torn Pages ($5.00)" },
+                                        { id: "spine", label: "Spine Damage ($10.00)" },
+                                        { id: "writing", label: "Writing/Markings ($3.00)" },
+                                        { id: "cover", label: "Cover Damage ($8.00)" },
+                                    ].map((type) => (
+                                        <div key={type.id} className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`damage-${type.id}`}
+                                                checked={forceDamageTypes.includes(type.id)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setForceDamageTypes(prev => [...prev, type.id]);
+                                                    } else {
+                                                        setForceDamageTypes(prev => prev.filter(t => t !== type.id));
+                                                    }
+                                                }}
+                                            />
+                                            <Label htmlFor={`damage-${type.id}`} className="text-xs font-normal cursor-pointer select-none">
+                                                {type.label}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Flat Lost Book warning */}
+                        {forceCondition === "lost" && (
+                            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-md text-xs flex items-start gap-2">
+                                <span className="font-semibold">Lost Book Flat Fine:</span> A $50.00 replacement charge will be applied to the member's account.
+                            </div>
+                        )}
+
+                        {/* Notes */}
+                        <div className="space-y-1">
+                            <Label htmlFor="force-notes" className="text-xs font-semibold">Administrative Return Notes</Label>
+                            <Textarea
+                                id="force-notes"
+                                placeholder="Add any notes on return condition, shelf placement, etc."
+                                value={forceNotes}
+                                onChange={(e) => setForceNotes(e.target.value)}
+                                className="text-xs"
+                                rows={2}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setIsForceDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            variant={forceCondition === "lost" ? "destructive" : "default"}
+                            onClick={confirmForceReturn}
+                            disabled={forceReturnBook.isPending}
+                            className="gap-2"
+                        >
+                            {forceReturnBook.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Confirm Return
                         </Button>
                     </DialogFooter>
                 </DialogContent>

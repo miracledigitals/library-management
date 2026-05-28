@@ -451,3 +451,30 @@ export function useProcessReturnRequest() {
         },
     });
 }
+
+export function useForceReturnBook() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            checkoutId,
+            staffUserId,
+            condition = "good",
+            damageTypes = [],
+            notes = ""
+        }: {
+            checkoutId: string,
+            staffUserId: string,
+            condition?: "good" | "worn" | "damaged" | "lost",
+            damageTypes?: string[],
+            notes?: string
+        }) => {
+            assertSupabaseConfigured();
+            return await processReturn(checkoutId, staffUserId, condition, damageTypes, notes);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["checkouts"] });
+            queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: ["return_requests"] });
+        },
+    });
+}

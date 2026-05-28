@@ -192,15 +192,51 @@ export function useDeleteBook() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
+            assertSupabaseConfigured();
+
+            // 1. Delete associated borrow requests (FK constraint bypass)
+            const { error: brError } = await supabase
+                .from('borrow_requests')
+                .delete()
+                .eq('book_id', id);
+            if (brError) {
+                console.warn("Failed to delete related borrow requests:", brError);
+            }
+
+            // 2. Delete associated return requests (FK constraint bypass)
+            const { error: rrError } = await supabase
+                .from('return_requests')
+                .delete()
+                .eq('book_id', id);
+            if (rrError) {
+                console.warn("Failed to delete related return requests:", rrError);
+            }
+
+            // 3. Delete associated checkouts (FK constraint bypass)
+            const { error: coError } = await supabase
+                .from('checkouts')
+                .delete()
+                .eq('book_id', id);
+            if (coError) {
+                console.warn("Failed to delete related checkouts:", coError);
+            }
+
+            // 4. Finally, delete the book itself
             const { error } = await supabase
                 .from('books')
                 .delete()
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error deleting book:", error);
+                throw error;
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: ["checkouts"] });
+            queryClient.invalidateQueries({ queryKey: ["borrow_requests"] });
+            queryClient.invalidateQueries({ queryKey: ["return_requests"] });
         },
     });
 }
