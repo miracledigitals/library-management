@@ -149,9 +149,10 @@ export default function BooksPage() {
                 currentPatron = newPatron;
                 setCreatedPatronId(newPatron.id || "");
                 toast.success("Account setup completed!");
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Account setup failed:", err);
-                toast.error("Account setup in progress. Please try again in a moment.");
+                const errMsg = err?.message || (typeof err === 'string' ? err : "Unknown account setup error");
+                toast.error(`Account setup failed: ${errMsg}`);
                 return;
             }
         }
