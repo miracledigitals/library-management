@@ -176,29 +176,6 @@ export default function LoginPage() {
                                     />
                                 </div>
                             )}
-                            {isRegistering && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="role">Account Type</Label>
-                                    <div className="flex gap-4">
-                                        <Button
-                                            type="button"
-                                            variant={role === "patron" ? "default" : "outline"}
-                                            className="flex-1 h-11"
-                                            onClick={() => setRole("patron")}
-                                        >
-                                            Patron
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={role === "admin" ? "default" : "outline"}
-                                            className="flex-1 h-11"
-                                            onClick={() => setRole("admin")}
-                                        >
-                                            Admin
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input

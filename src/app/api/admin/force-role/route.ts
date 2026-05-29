@@ -9,12 +9,17 @@ export async function POST(request: Request) {
         const targetFullName = typeof fullName === "string" ? fullName.trim() : "";
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-        const allowedEmail = process.env.ADMIN_BOOTSTRAP_EMAIL || "";
+        const allowedEmail = (
+            process.env.ADMIN_BOOTSTRAP_EMAIL ||
+            process.env.NEXT_PUBLIC_ADMIN_BOOTSTRAP_EMAIL ||
+            process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+            ""
+        ).trim();
 
         const missingConfig: string[] = [];
         if (!supabaseUrl) missingConfig.push("NEXT_PUBLIC_SUPABASE_URL");
         if (!serviceRoleKey) missingConfig.push("SUPABASE_SERVICE_ROLE_KEY");
-        if (!allowedEmail) missingConfig.push("ADMIN_BOOTSTRAP_EMAIL");
+        if (!allowedEmail) missingConfig.push("ADMIN_BOOTSTRAP_EMAIL / NEXT_PUBLIC_ADMIN_BOOTSTRAP_EMAIL / NEXT_PUBLIC_ADMIN_EMAIL");
 
         if (missingConfig.length > 0) {
             return NextResponse.json(
@@ -93,6 +98,30 @@ export async function POST(request: Request) {
                 { status: 500 }
             );
         }
+
+        // Ensure they have a record in the staff table (as required for library administration)
+        const staffId = "ST" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+        const firstName = displayName.split(" ")[0] || "";
+        const lastName = displayName.split(" ").slice(1).join(" ") || "";
+
+        await adminClient
+            .from("staff")
+            .upsert(
+                {
+                    id: user.id,
+                    staff_id: staffId,
+                    email: user.email,
+                    first_name: firstName,
+                    last_name: lastName
+                },
+                { onConflict: "id" }
+            );
+
+        // Remove any patron duplicate records for the bootstrapped user
+        await adminClient
+            .from("patrons")
+            .delete()
+            .eq("email", targetEmail);
 
         await adminClient
             .from("profiles")
