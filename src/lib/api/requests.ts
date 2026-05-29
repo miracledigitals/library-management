@@ -187,6 +187,7 @@ export function useCreateBorrowRequest() {
                     requester_name: request.requesterName,
                     book_title: request.bookTitle,
                     status: "pending",
+                    admin_notes: request.adminNotes || "",
                 }])
                 .select()
                 .single();

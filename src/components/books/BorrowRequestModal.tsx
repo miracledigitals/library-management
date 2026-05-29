@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
     Book,
     ArrowRight,
@@ -45,7 +46,8 @@ export function BorrowRequestModal({
     const [step, setStep] = useState(1);
     const [isSlowReader, setIsSlowReader] = useState(false);
     const [pickupDate, setPickupDate] = useState<Date | undefined>(addDays(new Date(), 1));
-    const [pickupLocation, setPickupLocation] = useState("Main Branch");
+    const [pickupLocation, setPickupLocation] = useState("At Church");
+    const [customLocation, setCustomLocation] = useState("");
     const [termsAgreed, setTermsAgreed] = useState(false);
 
     const createRequest = useCreateBorrowRequest();
@@ -60,13 +62,17 @@ export function BorrowRequestModal({
             return;
         }
 
+        const locationString = pickupLocation === "Other Location"
+            ? `Other Location (${customLocation.trim()})`
+            : "At Church";
+
         try {
             await createRequest.mutateAsync({
                 bookId: book.id || "",
                 patronId,
                 requesterName: patronName,
                 bookTitle: book.title,
-                adminNotes: `Pickup: ${pickupLocation} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested additional 10 days." : ""}`
+                adminNotes: `Pickup: ${locationString} on ${pickupDate ? format(pickupDate, "PPP") : "TBD"}. ${isSlowReader ? "Requested additional 10 days." : ""}`
             });
             toast.success("Borrow application submitted!");
             onOpenChange(false);
@@ -170,18 +176,37 @@ export function BorrowRequestModal({
                                     <Clock className="h-4 w-4" /> Collection Point
                                 </Label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {["Main Branch", "Express Locker"].map((loc) => (
+                                    {["At Church", "Other Location"].map((loc) => (
                                         <Button
                                             key={loc}
                                             variant={pickupLocation === loc ? "default" : "outline"}
                                             size="sm"
-                                            onClick={() => setPickupLocation(loc)}
+                                            onClick={() => {
+                                                setPickupLocation(loc);
+                                                if (loc !== "Other Location") {
+                                                    setCustomLocation("");
+                                                }
+                                            }}
                                             className="text-xs"
+                                            type="button"
                                         >
                                             {loc}
                                         </Button>
                                     ))}
                                 </div>
+                                {pickupLocation === "Other Location" && (
+                                    <div className="space-y-1.5 pt-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="custom-location" className="text-xs text-muted-foreground">Specify Location</Label>
+                                        <Input
+                                            id="custom-location"
+                                            value={customLocation}
+                                            onChange={(e) => setCustomLocation(e.target.value)}
+                                            placeholder="Specify where you want to collect the book..."
+                                            className="h-9 text-xs"
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -226,7 +251,11 @@ export function BorrowRequestModal({
                     )}
 
                     {step < 3 ? (
-                        <Button onClick={handleNext} className="gap-2">
+                        <Button
+                            onClick={handleNext}
+                            className="gap-2"
+                            disabled={step === 2 && pickupLocation === "Other Location" && !customLocation.trim()}
+                        >
                             Continue <ArrowRight className="h-4 w-4" />
                         </Button>
                     ) : (

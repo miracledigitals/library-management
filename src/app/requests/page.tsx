@@ -134,6 +134,11 @@ export default function RequestsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-medium">{request.bookTitle}</div>
+                                                    {request.adminNotes && (
+                                                        <div className="text-[11px] text-muted-foreground mt-1 bg-muted/50 px-2 py-1 rounded border border-dashed font-sans">
+                                                            {request.adminNotes}
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant={
@@ -191,6 +196,12 @@ export default function RequestsPage() {
                                 : `Explain why you're denying the request for "${selectedRequest?.bookTitle}".`}
                         </DialogDescription>
                     </DialogHeader>
+                    {selectedRequest?.adminNotes && (
+                        <div className="mt-2 p-3 bg-muted/60 rounded-md border text-xs text-muted-foreground space-y-1">
+                            <span className="font-semibold text-foreground">Collection & Pickup Details:</span>
+                            <p className="font-sans text-xs mt-0.5">{selectedRequest.adminNotes}</p>
+                        </div>
+                    )}
                     <div className="py-4">
                         <Textarea
                             placeholder="Add internal notes or feedback for the member..."
