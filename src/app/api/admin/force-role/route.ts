@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         let user = listData?.users?.find(
             (item) => item.email?.toLowerCase() === targetEmail.toLowerCase()
         );
-        let tempPassword: string | null = null;
+        let tempPassword: string | undefined = undefined;
 
         if (!user) {
             tempPassword = password || randomBytes(12).toString("base64url");
