@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 
 export async function POST(request: Request) {
     try {
-        const { email, fullName } = await request.json();
+        const { email, fullName, password } = await request.json();
         const targetEmail = typeof email === "string" ? email.trim() : "";
         const targetFullName = typeof fullName === "string" ? fullName.trim() : "";
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -28,11 +28,42 @@ export async function POST(request: Request) {
             );
         }
 
-        if (!targetEmail || targetEmail.toLowerCase() !== allowedEmail.toLowerCase()) {
-            return NextResponse.json(
-                { error: "Email not allowed for bootstrap." },
-                { status: 403 }
-            );
+        const isBootstrap = targetEmail && targetEmail.toLowerCase() === allowedEmail.toLowerCase();
+
+        if (!isBootstrap) {
+            const authorization = request.headers.get("authorization");
+            if (!authorization || !authorization.toLowerCase().startsWith("bearer ")) {
+                return NextResponse.json(
+                    { error: "Unauthorized: Admin authorization is required to onboard other users." },
+                    { status: 401 }
+                );
+            }
+
+            const token = authorization.slice(7).trim();
+            const tempAdminClient = createClient(supabaseUrl, serviceRoleKey, {
+                auth: { autoRefreshToken: false, persistSession: false }
+            });
+
+            const { data: { user: requesterUser }, error: authError } = await tempAdminClient.auth.getUser(token);
+            if (authError || !requesterUser) {
+                return NextResponse.json(
+                    { error: "Unauthorized: Invalid session token." },
+                    { status: 401 }
+                );
+            }
+
+            const { data: profile } = await tempAdminClient
+                .from("profiles")
+                .select("role")
+                .eq("id", requesterUser.id)
+                .single();
+
+            if (profile?.role !== "admin") {
+                return NextResponse.json(
+                    { error: "Forbidden: Only administrators can onboard new admins." },
+                    { status: 403 }
+                );
+            }
         }
 
         const adminClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -56,7 +87,7 @@ export async function POST(request: Request) {
         let tempPassword: string | null = null;
 
         if (!user) {
-            tempPassword = randomBytes(12).toString("base64url");
+            tempPassword = password || randomBytes(12).toString("base64url");
             const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
                 email: targetEmail,
                 password: tempPassword,

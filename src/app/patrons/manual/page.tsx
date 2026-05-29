@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Loader2, Shield } from "lucide-react";
 
 export default function ManualRegistrationPage() {
-    const { register } = useAuth();
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -37,7 +36,27 @@ export default function ManualRegistrationPage() {
 
         setIsSubmitting(true);
         try {
-            await register(email.trim(), password, fullName.trim(), "admin");
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const response = await fetch("/api/admin/force-role", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    email: email.trim(),
+                    fullName: fullName.trim(),
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || "Failed to create admin account.");
+            }
+
             toast.success("Admin account created.");
             setFullName("");
             setEmail("");
